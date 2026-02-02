@@ -53,10 +53,13 @@ const Navbar = () => {
                             <span className="opacity-50">/</span>
                             <button className="hover:text-yellow-200 font-bold transition-colors">Eng</button>
                         </div>
-                        <button className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                        <Link
+                            to="/auth"
+                            className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95"
+                        >
                             <LogIn size={14} />
                             Login
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -82,9 +85,13 @@ const Navbar = () => {
                                 <span>Tel</span> / <span>Eng</span>
                             </div>
                         </div>
-                        <button className="w-full text-center bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg text-sm font-bold text-white shadow-md">
+                        <Link
+                            to="/auth"
+                            className="w-full text-center bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg text-sm font-bold text-white shadow-md block"
+                            onClick={() => setIsOpen(false)}
+                        >
                             Login / Register
-                        </button>
+                        </Link>
                     </div>
                 </div>
             )}

@@ -9,7 +9,17 @@
   --color-secondary-dark: #01579B;
   --color-secondary-light: #4FC3F7;
 
+  --color-muted: #64748b;
+  --color-muted-foreground: #94a3b8;
+  --color-destructive: #ef4444;
+
   --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
 }
 
 @layer base {
