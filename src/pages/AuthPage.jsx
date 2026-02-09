@@ -5,6 +5,7 @@ import { Smartphone, Lock, User, ArrowRight } from 'lucide-react';
 import api from '../lib/api';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../features/auth/AuthContext';
 
 const AuthPage = () => {
     const [mode, setMode] = useState('LOGIN');
@@ -17,10 +18,11 @@ const AuthPage = () => {
     const [confirmPin, setConfirmPin] = useState('');
     const [fullName, setFullName] = useState('');
 
+    const { refreshUser } = useAuth();
+
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        // Validate PIN confirmation
         if (pin !== confirmPin) {
             toast.error('PINs do not match');
             return;
@@ -39,14 +41,17 @@ const AuthPage = () => {
                 full_name: fullName,
             });
             localStorage.setItem('auth_token', response.data.access_token);
+            const userData = await refreshUser(); // Notify context and get data
             toast.success('Registration successful! Welcome to the community!');
-            navigate('/dashboard');
+
+            if (userData?.role === 'HEAD') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (error) {
             const detail = error.response?.data?.detail;
-            const message = Array.isArray(detail)
-                ? detail.map((err) => `${err.loc[err.loc.length - 1]}: ${err.msg}`).join(', ')
-                : (typeof detail === 'string' ? detail : 'Registration failed');
-            toast.error(message);
+            toast.error(typeof detail === 'string' ? detail : 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -67,14 +72,17 @@ const AuthPage = () => {
                 pin,
             });
             localStorage.setItem('auth_token', response.data.access_token);
+            const userData = await refreshUser(); // Notify context and get data
             toast.success('Welcome back!');
-            navigate('/dashboard');
+
+            if (userData?.role === 'HEAD') {
+                navigate('/admin');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (error) {
             const detail = error.response?.data?.detail;
-            const message = Array.isArray(detail)
-                ? detail.map((err) => `${err.loc[err.loc.length - 1]}: ${err.msg}`).join(', ')
-                : (typeof detail === 'string' ? detail : 'Login failed');
-            toast.error(message);
+            toast.error(typeof detail === 'string' ? detail : 'Login failed');
         } finally {
             setLoading(false);
         }

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Home, Globe, LogIn } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Home, Globe, LogIn, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../features/auth/AuthContext';
 
 const Navbar = () => {
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const { user, signOut } = useAuth();
 
     // Hidden items as per user request (Membership, Services, Donations, Contact, FAQ)
     const navItems = [
@@ -53,13 +56,34 @@ const Navbar = () => {
                             <span className="opacity-50">/</span>
                             <button className="hover:text-yellow-200 font-bold transition-colors">Eng</button>
                         </div>
-                        <Link
-                            to="/auth"
-                            className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95"
-                        >
-                            <LogIn size={14} />
-                            Login
-                        </Link>
+                        {user ? (
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    to={user.role === 'HEAD' ? '/admin' : '/dashboard'}
+                                    className="text-xs font-bold hover:text-yellow-400 transition-colors"
+                                >
+                                    Dashboard
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        await signOut();
+                                        navigate('/auth');
+                                        setIsOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2 rounded-full border border-white/20 transition-all"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <Link
+                                to="/auth"
+                                className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95"
+                            >
+                                <LogIn size={14} />
+                                Login
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>
@@ -85,13 +109,35 @@ const Navbar = () => {
                                 <span>Tel</span> / <span>Eng</span>
                             </div>
                         </div>
-                        <Link
-                            to="/auth"
-                            className="w-full text-center bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg text-sm font-bold text-white shadow-md block"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Login / Register
-                        </Link>
+                        {user ? (
+                            <>
+                                <Link
+                                    to={user.role === 'HEAD' ? '/admin' : '/dashboard'}
+                                    className="w-full text-center bg-white/10 hover:bg-white/20 py-3 rounded-lg text-sm font-bold text-white border border-white/20 block transition-all"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Go to Dashboard
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        await signOut();
+                                        navigate('/auth');
+                                        setIsOpen(false);
+                                    }}
+                                    className="w-full text-center bg-red-500/20 hover:bg-red-500/30 py-3 rounded-lg text-sm font-bold text-red-100 border border-red-500/30 block transition-all"
+                                >
+                                    Log Out
+                                </button>
+                            </>
+                        ) : (
+                            <Link
+                                to="/auth"
+                                className="w-full text-center bg-yellow-500 hover:bg-yellow-600 py-3 rounded-lg text-sm font-bold text-white shadow-md block transition-all"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Login / Register
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}

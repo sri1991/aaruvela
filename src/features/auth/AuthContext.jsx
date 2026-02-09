@@ -1,144 +1,83 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import api from '../../lib/api';
 
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
-    const [supabaseUser, setSupabaseUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Check active sessions
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSupabaseUser(session?.user ?? null);
-            if (session?.user) {
-                fetchUserProfile();
-            } else {
-                setLoading(false);
-            }
-        });
-
-        // Listen for auth changes
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSupabaseUser(session?.user ?? null);
-            if (session?.user) {
-                fetchUserProfile();
-            } else {
-                setUser(null);
-                setLoading(false);
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
 
     const fetchUserProfile = async () => {
         try {
-            const session = await supabase.auth.getSession();
-            const token = session.data.session?.access_token;
+            const token = localStorage.getItem('auth_token');
+            console.log('DEBUG: fetchUserProfile checking token:', !!token);
 
             if (!token) {
+                setUser(null);
                 setLoading(false);
-                return;
+                return null;
             }
 
-            const response = await axios.get(`${API_URL}/auth/me`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
+            // Using the 'api' instance which already has the interceptor for the token
+            const response = await api.get('/auth/me');
+            console.log('DEBUG: fetchUserProfile success:', response.data.identifier);
             setUser(response.data);
+            return response.data;
         } catch (error) {
-            console.error('Error fetching user profile:', error);
+            console.error('DEBUG: fetchUserProfile error:', error);
             setUser(null);
+            if (error.response?.status === 401) {
+                localStorage.removeItem('auth_token');
+            }
+            return null;
         } finally {
             setLoading(false);
         }
     };
 
-    const signUp = async (email, password) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-        });
+    useEffect(() => {
+        console.log('DEBUG: AuthProvider initial check');
+        fetchUserProfile();
 
-        if (error) throw error;
-
-        // Create user record in our database
-        if (data.user) {
-            const { error: dbError } = await supabase
-                .from('users')
-                .insert({
-                    id: data.user.id,
-                    identifier: email,
-                    status: 'PENDING',
-                });
-
-            if (dbError) {
-                console.error('Error creating user record:', dbError);
+        const handleStorageChange = (e) => {
+            if (e.key === 'auth_token') {
+                console.log('DEBUG: auth_token storage change detected');
+                fetchUserProfile();
             }
-        }
-    };
-
-    const signIn = async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        if (error) throw error;
-    };
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        console.log('DEBUG: Signing out');
+        localStorage.removeItem('auth_token');
         setUser(null);
-        setSupabaseUser(null);
-    };
-
-    const setPin = async (pin) => {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
-
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-
-        await axios.post(
-            `${API_URL}/auth/set-pin`,
-            { pin },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        await supabase.auth.signOut();
     };
 
     const verifyPin = async (identifier, pin) => {
-        const response = await axios.post(`${API_URL}/auth/verify-pin`, {
+        console.log('DEBUG: verifyPin called for:', identifier);
+        const response = await api.post('/auth/verify-pin', {
             identifier,
             pin,
         });
+
+        if (response.data.access_token) {
+            console.log('DEBUG: received token, setting to localStorage');
+            localStorage.setItem('auth_token', response.data.access_token);
+            await fetchUserProfile();
+        }
 
         return response.data;
     };
 
     const value = {
         user,
-        supabaseUser,
         loading,
-        signUp,
-        signIn,
+        refreshUser: fetchUserProfile,
         signOut,
-        setPin,
         verifyPin,
     };
 
