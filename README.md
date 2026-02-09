@@ -1,16 +1,69 @@
-# React + Vite
+# 🏆 Aaruvela Community Application (Unified Platform)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A high-security, role-based community management system with digital membership, admin approvals, and future matrimony/directory services.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Quick Start: How to Run
 
-## React Compiler
+### 1. Backend (Python FastAPI)
+Navigate to the backend folder and start the server:
+```powershell
+cd backend
+# Create virtual environment (first time only)
+python -m venv venv
+.\venv\Scripts\activate
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# Install dependencies (first time only)
+pip install -r requirements.txt
 
-## Expanding the ESLint configuration
+# Start the server
+uvicorn app.main:app --reload
+```
+*Server runs on: http://localhost:8000*
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Frontend (React Vite)
+Open a separate terminal in the root folder (`aaruvela`):
+```powershell
+# Install dependencies (first time only)
+npm install
+
+# Start the development server
+npm run dev
+```
+*Website runs on: http://localhost:5173*
+
+---
+
+## 🧪 The "Full-Cycle" Testing Flow
+Use this flow to test or demo the entire system from Guest to Active Member:
+
+1.  **Register (Guest)**: Go to `/auth` and sign up with a new phone number.
+2.  **Application**: You will be forced to the `/membership` form. Complete all 6 steps.
+3.  **Payment Proof**: At the last step, provide a Transaction ID or Screenshot Link.
+4.  **Admin Login**: Logout, then log in using the **Master Admin** credentials below.
+5.  **Approve**: Go to the `/admin` dashboard, click "View Full Application", and then **"Approve & Activate"**.
+6.  **Success**: Logout, log back in with the Guest number. You now have access to the **Member Dashboard**!
+
+---
+
+## 🔑 Demo Credentials
+
+| Role | Phone Number | PIN | Description |
+| :--- | :--- | :--- | :--- |
+| **Master Admin** | `1112223333` | `1234` | Full access to approvals and management. |
+| **Test User** | `9876543210` | `1234` | A general user for testing regular access. |
+
+---
+
+## 📊 Project Architecture
+*   **Frontend**: React + Tailwind CSS + Framer Motion (Located in root).
+*   **Backend**: Python FastAPI + Supabase SDK (Located in `/backend`).
+*   **Database**: Supabase Postgres (Roles, Requests, and User Profiles).
+
+---
+
+## ⏭️ Development Roadmap
+*   **Phase 5**: Matrimony Hub & Member Directory.
+*   **Phase 6**: Integrated Razorpay Payments.
+*   **Phase 7**: Digital ID Card Generation.

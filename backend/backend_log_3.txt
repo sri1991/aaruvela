@@ -1,0 +1,13 @@
+DEBUG: Generated password: 'FrggYu3YFgOM' (length: 12)
+DEBUG: Hashing PIN: '1234' (length: 4)
+INFO:     127.0.0.1:63282 - "POST /auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63074 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56360 - "OPTIONS /auth/register HTTP/1.1" 200 OK
+DEBUG: Generated password: 'OkHrY0xscOaD' (length: 12)
+DEBUG: Hashing PIN: '1234' (length: 4)
+INFO:     127.0.0.1:56360 - "POST /auth/register HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63655 - "OPTIONS /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54645 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57233 - "OPTIONS /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57233 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61709 - "POST /auth/login HTTP/1.1" 200 OK
