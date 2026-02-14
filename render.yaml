@@ -26,12 +26,11 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: CORS_ORIGINS
-        sync: false # Set this to your frontend URL after deployment
+        sync: false # Set to frontend URL after deployment
 
+staticSites:
   # Frontend Service
-  - type: static
-    name: aaruvela-web
-    env: node
+  - name: aaruvela-web
     buildCommand: npm install && npm run build
     publishDir: dist
     root: .
