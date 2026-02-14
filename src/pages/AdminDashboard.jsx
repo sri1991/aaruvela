@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { Button } from '../components/ui';
 import { toast } from 'react-hot-toast';
-import { CheckCircle, XCircle, User, Loader2, ShieldCheck } from 'lucide-react';
+import { CheckCircle, XCircle, User, Loader2, ShieldCheck, Plus, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../features/auth/AuthContext';
 
@@ -12,6 +12,14 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newMember, setNewMember] = useState({
+        phone: '',
+        full_name: '',
+        role: 'NORMAL',
+        zonal_committee: '',
+        regional_committee: ''
+    });
 
     useEffect(() => {
         fetchRequests();
@@ -28,19 +36,23 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleAction = async (userId, action) => {
-        setActionLoading(userId);
+    const handleAddMember = async (e) => {
+        e.preventDefault();
+        setActionLoading('adding');
         try {
-            const response = await api.post('/admin/approve-request', {
-                user_id: userId,
-                action: action,
-                admin_notes: 'Approved via dashboard'
-            });
+            const response = await api.post('/admin/create-member', newMember);
             toast.success(response.data.message);
-            setSelectedRequest(null);
-            fetchRequests();
+            setShowAddModal(false);
+            setNewMember({ phone: '', full_name: '', role: 'NORMAL', zonal_committee: '', regional_committee: '' });
+            fetchRequests(); // Refresh list if needed (though it's for pending)
         } catch (error) {
-            toast.error(error.response?.data?.detail || 'Action failed');
+            const detail = error.response?.data?.detail;
+            const message = Array.isArray(detail)
+                ? detail.map(d => d.msg).join(', ')
+                : typeof detail === 'string'
+                    ? detail
+                    : 'Failed to add member';
+            toast.error(message);
         } finally {
             setActionLoading(null);
         }
@@ -60,11 +72,20 @@ const AdminDashboard = () => {
                         <h1 className="text-3xl font-black text-gray-900">Admin Dashboard</h1>
                         <p className="text-gray-500">Manage membership applications and approvals</p>
                     </div>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-                        <ShieldCheck className="text-green-600 h-6 w-6" />
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Requests</p>
-                            <p className="text-xl font-black text-gray-900">{requests.length}</p>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-gray-900 hover:bg-black text-white px-6 rounded-2xl h-14 shadow-lg shadow-gray-200"
+                        >
+                            <Plus size={18} className="mr-2" />
+                            Add Member
+                        </Button>
+                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                            <ShieldCheck className="text-green-600 h-6 w-6" />
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Requests</p>
+                                <p className="text-xl font-black text-gray-900">{requests.length}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +129,6 @@ const AdminDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-xs space-y-1">
-                                                    <p><span className="text-gray-400 font-medium">Gotram:</span> {req.users.gotram || 'N/A'}</p>
                                                     <p><span className="text-gray-400 font-medium">Applied:</span> {new Date(req.created_at).toLocaleDateString()}</p>
                                                     <p className="mt-2 text-[var(--color-primary)] font-bold cursor-pointer hover:underline" onClick={() => setSelectedRequest(req)}>
                                                         View Full Application →
@@ -172,11 +192,10 @@ const AdminDashboard = () => {
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)]">Personal Information</h3>
                                         <div className="space-y-2">
-                                            <DetailItem label="Full Name" value={selectedRequest.application_data.father_guardian_name} />
+                                            <DetailItem label="Applicant Name" value={selectedRequest.application_data.full_name} />
+                                            <DetailItem label="Father/Guardian" value={selectedRequest.application_data.father_guardian_name} />
                                             <DetailItem label="Age" value={selectedRequest.application_data.age} />
                                             <DetailItem label="DOB" value={selectedRequest.application_data.dob} />
-                                            <DetailItem label="Time" value={selectedRequest.application_data.tob} />
-                                            <DetailItem label="Gotram" value={selectedRequest.application_data.gotram} />
                                             <DetailItem label="Sub Sect" value={selectedRequest.application_data.sub_sect} />
                                         </div>
                                     </div>
@@ -188,8 +207,8 @@ const AdminDashboard = () => {
                                             <DetailItem label="Cell No" value={selectedRequest.application_data.cell_no} />
                                             <DetailItem label="Email" value={selectedRequest.application_data.email} />
                                             <DetailItem label="Occupation" value={selectedRequest.application_data.occupation} />
-                                            <DetailItem label="Annual Income" value={selectedRequest.application_data.annual_income} />
-                                            <DetailItem label="Star/Pada" value={selectedRequest.application_data.star_pada} />
+                                            <DetailItem label="Zone" value={selectedRequest.application_data.zonal_committee} />
+                                            <DetailItem label="Region" value={selectedRequest.application_data.regional_committee} />
                                         </div>
                                     </div>
 
@@ -203,11 +222,6 @@ const AdminDashboard = () => {
                                     <div className="md:col-span-2 space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Address</label>
                                         <p className="text-sm font-medium text-gray-900 bg-gray-50 p-4 rounded-2xl border border-gray-100">{selectedRequest.application_data.address || 'N/A'}</p>
-                                    </div>
-
-                                    <div className="md:col-span-2 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Particulars</label>
-                                        <p className="text-sm font-medium text-gray-900">{selectedRequest.application_data.particulars || 'None provided'}</p>
                                     </div>
                                 </div>
 
@@ -233,15 +247,103 @@ const AdminDashboard = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Add Member Modal */}
+            <AnimatePresence>
+                {showAddModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl"
+                        >
+                            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-gray-900 rounded-xl text-white">
+                                        <UserPlus size={20} />
+                                    </div>
+                                    <h2 className="text-xl font-black text-gray-900">Add New Member</h2>
+                                </div>
+                                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                                    <XCircle size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAddMember} className="p-8 space-y-4">
+                                <Input label="Full Name" required value={newMember.full_name} onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })} />
+                                <Input label="Phone Number" required value={newMember.phone} onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })} placeholder="e.g. 9876543210" />
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Membership Type</label>
+                                        <select
+                                            className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
+                                            value={newMember.role}
+                                            onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                                        >
+                                            <option value="PERMANENT">Permanent</option>
+                                            <option value="NORMAL">Normal</option>
+                                            <option value="ASSOCIATED">Associated</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Zone</label>
+                                        <select
+                                            className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
+                                            value={newMember.zonal_committee}
+                                            onChange={(e) => setNewMember({ ...newMember, zonal_committee: e.target.value })}
+                                        >
+                                            <option value="">Select Zone</option>
+                                            {['Uttar Andhra', 'Rayalaseema', 'Dakshina Kosta Andhra', 'Madhya Kosta'].map(opt => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Regional Committee</label>
+                                    <select
+                                        className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
+                                        value={newMember.regional_committee}
+                                        onChange={(e) => setNewMember({ ...newMember, regional_committee: e.target.value })}
+                                    >
+                                        <option value="">Select Region</option>
+                                        {['Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={actionLoading === 'adding'}
+                                    className="w-full h-14 bg-gray-900 hover:bg-black text-white rounded-2xl mt-4 shadow-xl shadow-gray-200"
+                                >
+                                    {actionLoading === 'adding' ? <Loader2 className="animate-spin" /> : 'Create Active Membership'}
+                                </Button>
+                                <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest">Default PIN: 1234</p>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 const DetailItem = ({ label, value, color = "text-gray-900" }) => (
     <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-500">{label}:</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600">{label}</span>
         <span className={`font-bold ${color}`}>{value || 'N/A'}</span>
     </div>
 );
 
 export default AdminDashboard;
+

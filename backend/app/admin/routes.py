@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from app.auth.dependencies import require_admin
 from app.db import get_supabase_client
-from app.admin.models import MemberApprovalRequest
+from app.admin.models import MemberApprovalRequest, ManualMemberCreate
 
 router = APIRouter()
 
@@ -57,11 +57,11 @@ async def approve_request(
         role = request.role or mr.data[0]["requested_role"]
         print(f"DEBUG: Role to assign: {role}")
         
-        # 2. Generate Member ID (Pid, Nid, Aid)
+        # 2. Generate Member ID (PID, NID, AID)
         prefixes = {
-            "PERMANENT": "Pid",
-            "NORMAL": "Nid",
-            "ASSOCIATED": "Aid"
+            "PERMANENT": "PID",
+            "NORMAL": "NID",
+            "ASSOCIATED": "AID"
         }
         prefix = prefixes.get(role, "GEN")
         
@@ -112,4 +112,81 @@ async def approve_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Approval error: {str(e)}"
+        )
+@router.post("/create-member")
+async def create_manual_member(
+    request: ManualMemberCreate,
+    admin: dict = Depends(require_admin)
+):
+    """
+    Directly create a member. If user doesn't exist, create one.
+    Assign role and member ID immediately.
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        # 1. Ensure user exists (check by phone)
+        # For manual creation, we use phone as identifier
+        user_check = supabase.table("users").select("*").eq("phone", request.phone).execute()
+        
+        user_id = None
+        if user_check.data:
+            user_id = user_check.data[0]["id"]
+            print(f"DEBUG: Found existing user {user_id} for phone {request.phone}")
+        else:
+            # Create new user shell
+            print(f"DEBUG: Creating new user shell for phone {request.phone}")
+            new_user = {
+                "identifier": request.phone,
+                "phone": request.phone,
+                "pin": "1234", # Default PIN for manual adds
+                "role": "PENDING",
+                "status": "INACTIVE"
+            }
+            user_insert = supabase.table("users").insert(new_user).execute()
+            if not user_insert.data:
+                raise Exception("Failed to create user shell")
+            user_id = user_insert.data[0]["id"]
+
+        # 2. Generate Member ID (Reuse logic or keep it simple)
+        prefixes = {"PERMANENT": "PID", "NORMAL": "NID", "ASSOCIATED": "AID"}
+        prefix = prefixes.get(request.role, "GEN")
+        
+        count_result = supabase.table("users").select("id", count="exact").eq("role", request.role).execute()
+        next_num = (count_result.count or 0) + 1
+        new_member_id = f"{prefix}-{next_num:03d}"
+
+        # 3. Update User profile
+        update_data = {
+            "full_name": request.full_name,
+            "role": request.role,
+            "status": "ACTIVE",
+            "member_id": new_member_id,
+            "zonal_committee": request.zonal_committee,
+            "regional_committee": request.regional_committee
+        }
+        supabase.table("users").update(update_data).eq("id", user_id).execute()
+
+        # 4. Create an entry in membership_requests just for the records
+        request_record = {
+            "user_id": user_id,
+            "requested_role": request.role,
+            "application_data": update_data,
+            "payment_status": "PAID",
+            "approval_status": "APPROVED",
+            "admin_notes": "Manually added by Admin"
+        }
+        supabase.table("membership_requests").insert(request_record).execute()
+
+        return {
+            "message": "Member created successfully",
+            "member_id": new_member_id,
+            "user_id": user_id
+        }
+
+    except Exception as e:
+        print(f"DEBUG: ERROR in create_manual_member: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Manual creation error: {str(e)}"
         )

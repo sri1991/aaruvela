@@ -4,6 +4,7 @@ from datetime import date, time
 from decimal import Decimal
 
 class UserBioData(BaseModel):
+    full_name: Optional[str] = None
     father_guardian_name: Optional[str] = None
     age: Optional[int] = None
     dob: Optional[date] = None

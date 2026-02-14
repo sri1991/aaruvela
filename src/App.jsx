@@ -7,6 +7,7 @@ import Administration from './pages/Administration';
 import AuthPage from './pages/AuthPage.jsx';
 import MembershipRequest from './pages/MembershipRequest.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import MemberDashboard from './pages/MemberDashboard.jsx';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -57,7 +58,7 @@ function App() {
 
               <Route path="/dashboard" element={
                 <ProtectedRoute status="ACTIVE">
-                  <Placeholder title="Member Dashboard" />
+                  <MemberDashboard />
                 </ProtectedRoute>
               } />
 

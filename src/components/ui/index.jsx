@@ -31,7 +31,7 @@ export const Button = ({
     return (
         <button
             className={cn(
-                'inline-flex items-center justify-center rounded-xl font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-95 cursor-pointer',
+                'inline-flex items-center justify-center rounded-2xl font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-pointer',
                 variants[variant],
                 sizes[size],
                 className
@@ -50,17 +50,17 @@ export const Button = ({
 export const Input = React.forwardRef(
     ({ className, label, error, icon, ...props }, ref) => {
         return (
-            <div className="w-full space-y-1.5 text-left">
-                {label && <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700">{label}</label>}
+            <div className="w-full space-y-1 text-left">
+                {label && <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">{label}</label>}
                 <div className="relative">
                     {icon && (
-                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-[var(--color-primary)]">
                             {icon}
                         </div>
                     )}
                     <input
                         className={cn(
-                            'flex h-11 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-light)] disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-[var(--color-primary)]',
+                            'flex h-12 w-full rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 font-medium placeholder:text-gray-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-primary-light)]/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 focus:border-[var(--color-primary)] focus:shadow-sm',
                             icon && 'pl-11',
                             error && 'border-red-500 focus-visible:ring-red-500',
                             className
