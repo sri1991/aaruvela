@@ -1,70 +1,74 @@
-# Deployment Guide: Aaruvela PWA
+# Deployment Guide: Aaruvela App
 
-This guide details how to deploy your application to **Render** and configure a **Custom Domain**.
+This guide details how to deploy your full-stack application (FastAPI Backend + Vite Frontend) to **Render** using a Blueprint.
 
 ## Prerequisites
 
 1.  **Git Repository**: Ensure your code is pushed to a remote repository (GitHub, GitLab, or Gitea).
-    *   *You have already initialized the local repo. You just need to push it.*
+2.  **Render Account**: Create an account at [dashboard.render.com](https://dashboard.render.com/).
 
-## Part 1: Deploying to Render
+## easy Deployment with Blueprint (Recommended)
 
-Render is a cloud provider that offers free static site hosting with SSL.
+I have created a `render.yaml` file in your repository. This file tells Render exactly how to build and deploy both your backend and frontend.
 
-1.  **Create Account**: Log in to [dashboard.render.com](https://dashboard.render.com/).
-2.  **New Static Site**:
-    *   Click **New +** and select **Static Site**.
-3.  **Connect Repository**:
-    *   If using GitHub/GitLab, connect your account and select the `aaruvela` repository.
-    *   If using Gitea or a public repo, you can use the "Public Git Repository" URL field, strictly if the repo is public. If private, you may need to use a different method or move to GitHub/GitLab for easier integration.
-4.  **Configure Build**:
-    *   **Name**: `aaruvela-app` (or similar)
-    *   **Branch**: `main`
-    *   **Root Directory**: `.` (leave empty)
-    *   **Build Command**: `npm run build`
-    *   **Publish Directory**: `dist`
-5.  **Deploy**: Click **Create Static Site**.
-    *   Render will clone your repo, install dependencies, and run the build.
+1.  **New Blueprint**:
+    *   In the Render Dashboard, click **New +** and select **Blueprint**.
+2.  **Connect Repository**:
+    *   Connect your `aaruvela` repository.
+3.  **Approve**:
+    *   Render will read the `render.yaml` file and show you two services: `aaruvela-api` and `aaruvela-web`.
+    *   Click **Apply**.
 
-### Critical: Single Page Application (SPA) Fix
+### Environment Variables
 
-Since this is a React app with routing (e.g., `/about`, `/administration`), you must configure Render to handle client-side routes.
+After the initial sync, you MUST configure the environment variables for your services. The build might fail initially until these are set.
 
-1.  Go to your Static Site's **Settings** tab.
-2.  Scroll down to **Redirects / Rewrites**.
-3.  Click **Add Rule**.
-4.  Enter the following:
-    *   **Source**: `/*`
-    *   **Destination**: `/index.html`
-    *   **Action**: `Rewrite`
-5.  Save Changes.
+#### 1. Backend Service (`aaruvela-api`)
+Go to the **Environment** tab of your new backend service and add:
 
-## Part 2: Configuring a Custom Domain
+-   `SUPABASE_URL`: Your Supabase URL
+-   `SUPABASE_SERVICE_KEY`: Your Supabase Service Key (from Supabase Dashboard > Settings > API)
+-   `SUPABASE_ANON_KEY`: Your Supabase Anon Key
+-   `JWT_SECRET`: A strong random string
+-   `RAZORPAY_KEY_ID`: Your Razorpay Key ID
+-   `RAZORPAY_KEY_SECRET`: Your Razorpay Secret
+-   `CORS_ORIGINS`: After deployment, set this to your Frontend URL (e.g., `https://aaruvela-web.onrender.com`)
 
-You mentioned you have purchased a domain name. Here is how to link it.
+#### 2. Frontend Service (`aaruvela-web`)
+Go to the **Environment** tab of your new frontend static site and add:
 
-1.  **Add Domain in Render**:
-    *   Go to your Static Site's **Settings** tab.
-    *   Scroll to **Custom Domains**.
-    *   Click **Add Custom Domain**.
-    *   Enter your domain name (e.g., `www.yourdomain.com`).
+-   `VITE_SUPABASE_URL`: Your Supabase URL
+-   `VITE_SUPABASE_ANON_KEY`: Your Supabase Anon Key
 
-2.  **Update DNS Records**:
-    *   Render will provide you with DNS records to add to your Domain Registrar (where you bought the domain, e.g., GoDaddy, Namecheap).
-    *   **If using a subdomain (www.example.com)**:
-        *   Create a **CNAME** record.
-        *   **Host/Name**: `www`
-        *   **Value/Target**: `[your-app-name].onrender.com`
-    *   **If using the root domain (example.com)**:
-        *   Create an **A** record.
-        *   **Host/Name**: `@`
-        *   **Value**: *Render will show you the IP address (usually `216.24.57.1`)*.
+*Note: `VITE_API_URL` and `VITE_API_BASE_URL` are automatically linked to your backend service by the blueprint.*
 
-3.  **Verification**:
-    *   Wait for DNS propagation (can take minutes to a few hours).
-    *   Render will automatically verify the domain and issue a **free SSL certificate** (HTTPS).
+---
 
-## Troubleshooting
+## Alternative: Manual Deployment
 
--   **"Page Not Found" on Refresh**: Ensure you added the **Rewrite Rule** mentioned in Part 1.
--   **Images not showing**: Ensure all images are in `src/assets` or `public` and imported correctly. (Your app is currently set up correctly for this).
+If you prefer to deploy services manually, follow these steps:
+
+### Part 1: Backend (Web Service)
+1.  **New Web Service** -> Connect Repo.
+2.  **Root Directory**: `backend`
+3.  **Runtime**: Python 3
+4.  **Build Command**: `pip install -r requirements.txt`
+5.  **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+6.  **Environment Variables**: Add all backend variables listed above.
+
+### Part 2: Frontend (Static Site)
+1.  **New Static Site** -> Connect Repo.
+2.  **Root Directory**: `.` (leave empty)
+3.  **Build Command**: `npm install && npm run build`
+4.  **Publish Directory**: `dist`
+5.  **Redirects/Rewrites**:
+    *   Source: `/*`
+    *   Destination: `/index.html`
+    *   Action: `Rewrite`
+6.  **Environment Variables**: Add all frontend variables listed above.
+
+## Custom Domain Setup
+
+1.  Go to your service's **Settings** > **Custom Domains**.
+2.  Add your domain (e.g., `www.yourdomain.com`).
+3.  Follow the DNS instructions provided by Render (add CNAME or A record).
