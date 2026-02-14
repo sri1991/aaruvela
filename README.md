@@ -35,24 +35,12 @@ npm run dev
 
 ---
 
-## 🧪 The "Full-Cycle" Testing Flow
-Use this flow to test or demo the entire system from Guest to Active Member:
-
-1.  **Register (Guest)**: Go to `/auth` and sign up with a new phone number.
-2.  **Application**: You will be forced to the `/membership` form. Complete all 6 steps.
-3.  **Payment Proof**: At the last step, provide a Transaction ID or Screenshot Link.
-4.  **Admin Login**: Logout, then log in using the **Master Admin** credentials below.
-5.  **Approve**: Go to the `/admin` dashboard, click "View Full Application", and then **"Approve & Activate"**.
-6.  **Success**: Logout, log back in with the Guest number. You now have access to the **Member Dashboard**!
-
----
-
 ## 🔑 Demo Credentials
 
 | Role | Phone Number | PIN | Description |
 | :--- | :--- | :--- | :--- |
 | **Master Admin** | `1112223333` | `1234` | Full access to approvals and management. |
-| **Test User** | `9876543210` | `1234` | A general user for testing regular access. |
+| **Test User** | `3456789012` | `1234` | A general user for testing regular access. |
 
 ---
 
@@ -67,3 +55,43 @@ Use this flow to test or demo the entire system from Guest to Active Member:
 *   **Phase 5**: Matrimony Hub & Member Directory.
 *   **Phase 6**: Integrated Razorpay Payments.
 *   **Phase 7**: Digital ID Card Generation.
+
+
+To view the swagger docs : 
+
+"    http://localhost:8000/api/docs   "
+
+1.
+frontend: env 
+aaruvela
+
+VITE_SUPABASE_URL=https://jbaykylbcdairolyonsm.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiYXlreWxiY2RhaXJvbHlvbnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDY3NzYsImV4cCI6MjA4NTA4Mjc3Nn0.pY60PwcrLBCWa6nSOx9KblD0fUPC_XdPIQo7gxL_c6Y
+VITE_API_URL=http://localhost:8000
+VITE_API_BASE_URL=http://localhost:8000
+
+
+2.
+backend env
+
+# Supabase Configuration
+SUPABASE_URL=https://jbaykylbcdairolyonsm.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiYXlreWxiY2RhaXJvbHlvbnNtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTUwNjc3NiwiZXhwIjoyMDg1MDgyNzc2fQ.GGYsDF2gzXjTRmZ92b_H-Pgdzyp1CO7hQtP8lwmRt1g
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiYXlreWxiY2RhaXJvbHlvbnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDY3NzYsImV4cCI6MjA4NTA4Mjc3Nn0.pY60PwcrLBCWa6nSOx9KblD0fUPC_XdPIQo7gxL_c6Y
+
+# Razorpay Configuration (use test keys for now)
+RAZORPAY_KEY_ID=rzp_test_XXXXXXXXXX
+RAZORPAY_KEY_SECRET=XXXXXXXXXX
+
+# JWT Configuration
+JWT_SECRET=kAgY6NQu6MbDS1BS76zdYIRgQtCFO0xpnbVD5OzPZf4
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_MINUTES=1440
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+CORS_ORIGINS=http://localhost:5173,http://localhost:5175,http://localhost:3000
+
+# Environment
+ENVIRONMENT=development

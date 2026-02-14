@@ -1,2 +1,0 @@
-DEBUG: Generated password: 'lb5EZh3nZNTj' (length: 12)
-INFO:     127.0.0.1:64980 - "POST /auth/register HTTP/1.1" 400 Bad Request
