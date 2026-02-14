@@ -66,13 +66,15 @@ const MemberDashboard = () => {
                             <div ref={cardRef}>
                                 <MemberCard user={user} />
                             </div>
-                            <Button
-                                onClick={downloadCard}
-                                className="w-full mt-6 rounded-[1.5rem] h-14 bg-gray-900 hover:bg-black text-white shadow-xl shadow-gray-200"
-                            >
-                                <Download size={18} className="mr-2" />
-                                Download Digital ID Card
-                            </Button>
+                            <div className="flex justify-center">
+                                <Button
+                                    onClick={downloadCard}
+                                    className="mt-6 rounded-2xl h-11 px-6 bg-gray-900 hover:bg-black text-white shadow-lg shadow-gray-200 text-xs font-black uppercase tracking-widest"
+                                >
+                                    <Download size={14} className="mr-2" />
+                                    Download ID Card
+                                </Button>
+                            </div>
                         </section>
 
                         <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
