@@ -1,11 +1,8 @@
-from passlib.context import CryptContext
+import bcrypt
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from typing import Optional, Dict, Any
 from app.config import settings
-
-# Password context for PIN hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_pin(pin: str) -> str:
@@ -18,7 +15,7 @@ def hash_pin(pin: str) -> str:
     Returns:
         Hashed PIN
     """
-    return pwd_context.hash(pin)
+    return bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
@@ -32,7 +29,10 @@ def verify_pin(plain_pin: str, hashed_pin: str) -> bool:
     Returns:
         True if PIN matches, False otherwise
     """
-    return pwd_context.verify(plain_pin, hashed_pin)
+    try:
+        return bcrypt.checkpw(plain_pin.encode('utf-8'), hashed_pin.encode('utf-8'))
+    except (ValueError, TypeError):
+        return False
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
