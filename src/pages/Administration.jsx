@@ -36,17 +36,17 @@ const Administration = () => {
 
     // Data provided by User
     const foundingMembers = [
-        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", mobile: "9849476726", image: "src/assets/foundingmembers/venugopal.jpeg" },
-        { name: "Chiruvolu Srinivasarao", mobile: "9885063577", image: "src/assets/foundingmembers/ChSrinivasarao.jpeg" },
-        { name: "Chayanam Srinivasa Murthy", mobile: "9440326363", image: "src/assets/foundingmembers/Chayanam.jpeg" },
-        { name: "Chiruvolu Satya Srinivas", mobile: "9491223344", image: "src/assets/foundingmembers/chsrinivas2.jpeg" },
-        { name: "Kunderu Kanubabu", mobile: "8309874005", image: "src/assets/foundingmembers/kanubabu.jpeg" },
-        { name: "Vadrevu Sarabharaju", mobile: "9866103483", image: "src/assets/foundingmembers/Sarabharaju.jpeg" },
-        { name: "Nadakuditi Sreeramachandra Murthy", mobile: "9848645899", image: "src/assets/foundingmembers/Nadakuditi.jpeg" },
-        { name: "Nerella Gnana Satya Venkatanarayana", mobile: "9848747447", image: "src/assets/foundingmembers/Nerella.jpeg" },
-        { name: "Vadrevu Srinivas", mobile: "7997459859", image: "src/assets/foundingmembers/Vadrevu Srinivas.jpeg" },
-        { name: "Ventrapragada Venugopalarao", mobile: "9440097872", image: "src/assets/foundingmembers/Ventrapragada.jpeg" },
-        { name: "Koochimanchi Sasidhara Sriram", mobile: "9246832468", image: "src/assets/foundingmembers/Kuchimanchi.jpeg" },
+        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", mobile: "9849476726", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/venugopal.jpeg" },
+        { name: "Chiruvolu Srinivasarao", mobile: "9885063577", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/ChSrinivasarao.jpeg" },
+        { name: "Chayanam Srinivasa Murthy", mobile: "9440326363", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Chayanam.jpeg" },
+        { name: "Chiruvolu Satya Srinivas", mobile: "9491223344", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/chsrinivas2.jpeg" },
+        { name: "Kunderu Kanubabu", mobile: "8309874005", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/kanubabu.jpeg" },
+        { name: "Vadrevu Sarabharaju", mobile: "9866103483", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Sarabharaju.jpeg" },
+        { name: "Nadakuditi Sreeramachandra Murthy", mobile: "9848645899", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Nadakuditi.jpeg" },
+        { name: "Nerella Gnana Satya Venkatanarayana", mobile: "9848747447", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Nerella.jpeg" },
+        { name: "Vadrevu Srinivas", mobile: "7997459859", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Vadrevu Srinivas.jpeg" },
+        { name: "Ventrapragada Venugopalarao", mobile: "9440097872", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Ventrapragada.jpeg" },
+        { name: "Koochimanchi Sasidhara Sriram", mobile: "9246832468", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Kuchimanchi.jpeg" },
     ];
 
     const executiveMembers = [
