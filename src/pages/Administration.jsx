@@ -3,19 +3,29 @@ import { Users, Phone, BadgeCheck, FileText, MessageSquare } from 'lucide-react'
 import rcImage from '../assets/administration-rc.jpg';
 import chairmanMessagePdf from '../assets/6000N Pamplet.pdf';
 
-const MemberCard = ({ name, post, mobile, isExecutive }) => (
-    <div className={`p-4 rounded-xl border ${isExecutive ? 'border-l-4 border-l-[var(--color-secondary)] bg-blue-50' : 'border-l-4 border-l-yellow-400 bg-yellow-50'} shadow-sm hover:shadow-md transition-shadow`}>
-        <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-            {name}
-            {isExecutive && <BadgeCheck size={16} className="text-[var(--color-secondary)]" />}
-        </h3>
-        {isExecutive && <p className="text-[var(--color-primary-dark)] font-medium text-sm mb-2">{post}</p>}
-        {mobile && (
-            <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <Phone size={14} />
-                <span>{mobile}</span>
-            </div>
-        )}
+const MemberCard = ({ name, post, mobile, image, isExecutive }) => (
+    <div className={`p-4 rounded-xl border ${isExecutive ? 'border-l-4 border-l-[var(--color-secondary)] bg-blue-50' : 'border-l-4 border-l-yellow-400 bg-yellow-50'} shadow-sm hover:shadow-md transition-shadow flex items-center gap-4`}>
+        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-gray-200">
+            <img
+                src={image || `https://placehold.co/100x100?text=${name.charAt(0)}`}
+                alt={name}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/100x100?text=${name.charAt(0)}`; }}
+            />
+        </div>
+        <div>
+            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                {name}
+                {isExecutive && <BadgeCheck size={16} className="text-[var(--color-secondary)]" />}
+            </h3>
+            {post && <p className={`${isExecutive ? 'text-[var(--color-primary-dark)]' : 'text-yellow-700'} font-medium text-sm mb-1`}>{post}</p>}
+            {mobile && (
+                <div className="flex items-center gap-2 text-gray-600 text-sm">
+                    <Phone size={14} />
+                    <span>{mobile}</span>
+                </div>
+            )}
+        </div>
     </div>
 );
 
@@ -26,17 +36,17 @@ const Administration = () => {
 
     // Data provided by User
     const foundingMembers = [
-        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", post: "Hon’ble President", mobile: "9849476726" },
-        { name: "Chiruvolu Srinivasarao", post: "President", mobile: "9885063577" },
-        { name: "Chayanam Srinivasa Murthy", post: "Vice-President", mobile: "9440326363" },
-        { name: "Chiruvolu Satya Srinivas", post: "Co-Vice President", mobile: "9491223344" },
-        { name: "Kunderu Kanubabu", post: "Secretary", mobile: "8309874005" },
-        { name: "Vadrevu Sarabharaju", post: "Asst. Secretary", mobile: "9866103483" },
-        { name: "Nadakuditi Sreeramachandra Murthy", post: "Treasurer", mobile: "9848645899" },
-        { name: "Nerella Gnana Satya Venkatanarayana", post: "Member", mobile: "9848747447" },
-        { name: "Vadrevu Srinivas", post: "Member", mobile: "7997459859" },
-        { name: "Ventrapragada Venugopalarao", post: "Member", mobile: "9440097872" },
-        { name: "Koochimanchi Sasidhara Sriram", post: "Member", mobile: "9246832468" },
+        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", mobile: "9849476726", image: "src/assets/foundingmembers/venugopal.jpeg" },
+        { name: "Chiruvolu Srinivasarao", mobile: "9885063577", image: "src/assets/foundingmembers/ChSrinivasarao.jpeg" },
+        { name: "Chayanam Srinivasa Murthy", mobile: "9440326363", image: "src/assets/foundingmembers/Chayanam.jpeg" },
+        { name: "Chiruvolu Satya Srinivas", mobile: "9491223344", image: "src/assets/foundingmembers/chsrinivas2.jpeg" },
+        { name: "Kunderu Kanubabu", mobile: "8309874005", image: "src/assets/foundingmembers/kanubabu.jpeg" },
+        { name: "Vadrevu Sarabharaju", mobile: "9866103483", image: "src/assets/foundingmembers/Sarabharaju.jpeg" },
+        { name: "Nadakuditi Sreeramachandra Murthy", mobile: "9848645899", image: "src/assets/foundingmembers/Nadakuditi.jpeg" },
+        { name: "Nerella Gnana Satya Venkatanarayana", mobile: "9848747447", image: "src/assets/foundingmembers/Nerella.jpeg" },
+        { name: "Vadrevu Srinivas", mobile: "7997459859", image: "src/assets/foundingmembers/Vadrevu Srinivas.jpeg" },
+        { name: "Ventrapragada Venugopalarao", mobile: "9440097872", image: "src/assets/foundingmembers/Ventrapragada.jpeg" },
+        { name: "Koochimanchi Sasidhara Sriram", mobile: "9246832468", image: "src/assets/foundingmembers/Kuchimanchi.jpeg" },
     ];
 
     const executiveMembers = [
