@@ -36,6 +36,24 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleAction = async (userId, action) => {
+        setActionLoading(userId);
+        try {
+            const response = await api.post('/admin/approve-request', {
+                user_id: userId,
+                action: action,
+                admin_notes: 'Approved via dashboard'
+            });
+            toast.success(response.data.message);
+            setSelectedRequest(null);
+            fetchRequests();
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Action failed');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     const handleAddMember = async (e) => {
         e.preventDefault();
         setActionLoading('adding');
