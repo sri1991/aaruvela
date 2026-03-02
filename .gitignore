@@ -120,3 +120,9 @@ dist-ssr
 
 # MacOS
 .DS_Store
+
+# Python
+backend/venv/
+**/__pycache__/
+*.pyc
+*.pyo

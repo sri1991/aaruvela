@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     supabase_service_key: str
     supabase_anon_key: str
     
-    # Razorpay
-    razorpay_key_id: str
-    razorpay_key_secret: str
+    # Razorpay (optional until payment feature is enabled)
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
     
     # JWT
     jwt_secret: str
