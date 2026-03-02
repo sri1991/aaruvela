@@ -73,3 +73,10 @@ class LoginRequest(BaseModel):
     """Request model for phone/PIN login"""
     phone: str = Field(..., example="+919876543210")
     pin: str = Field(..., min_length=4, max_length=4, pattern="^[0-9]{4}$", example="1234")
+
+
+class UpdateProfileRequest(BaseModel):
+    """Request model for members updating their personal details"""
+    address: Optional[str] = None
+    occupation: Optional[str] = None
+    photo_url: Optional[str] = None

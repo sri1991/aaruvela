@@ -105,7 +105,7 @@ const ImageGallery = () => {
                 }}
             >
                 {images.map((img, index) => (
-                    <SwiperSlide key={img.id} className="!w-[300px] !h-[250px] relative group rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-white">
+                    <SwiperSlide key={img.id} className="!w-[220px] sm:!w-[300px] !h-[180px] sm:!h-[250px] relative group rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-white">
                         <img
                             src={img.src}
                             alt={img.alt}

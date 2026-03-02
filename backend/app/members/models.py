@@ -6,7 +6,6 @@ from decimal import Decimal
 class UserBioData(BaseModel):
     full_name: Optional[str] = None
     father_guardian_name: Optional[str] = None
-    age: Optional[int] = None
     dob: Optional[date] = None
     tob: Optional[time] = None
     gotram: Optional[str] = None

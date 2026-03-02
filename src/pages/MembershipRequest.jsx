@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../components/ui';
 import { User, Users, Briefcase, MapPin, Phone, Mail, Calendar, Info, FileText, Smartphone, Camera, Loader2, CheckCircle2, UploadCloud } from 'lucide-react';
@@ -10,8 +10,7 @@ import paymentQR from '../assets/6000N Payment.jpg';
 
 const STEPS = [
     { title: 'Membership Type', icon: <Users /> },
-    { title: 'Personal Details', icon: <User /> },
-    { title: 'Contact & Work', icon: <MapPin /> },
+    { title: 'Personal & Contact', icon: <User /> },
     { title: 'Payment Proof', icon: <Smartphone /> },
     { title: 'Review', icon: <FileText /> }
 ];
@@ -26,9 +25,7 @@ const MembershipRequest = () => {
         bio_data: {
             full_name: '',
             father_guardian_name: '',
-            age: '',
             dob: '',
-            sub_sect: '',
             occupation: '',
             star_pada: '',
             address: '',
@@ -47,6 +44,27 @@ const MembershipRequest = () => {
         photo: false,
         payment: false
     });
+
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [submittedData, setSubmittedData] = useState(null);
+    const [statusLoading, setStatusLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const response = await api.get('/members/status');
+                if (response.data && response.data.status !== "NONE") {
+                    setIsSubmitted(true);
+                    setSubmittedData(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            } finally {
+                setStatusLoading(false);
+            }
+        };
+        fetchStatus();
+    }, []);
 
     const updateBioData = (field, value) => {
         setFormData(prev => ({
@@ -104,7 +122,6 @@ const MembershipRequest = () => {
         try {
             // Clean data: convert empty strings to null for optional/numeric fields to avoid 422 error
             const submissionData = JSON.parse(JSON.stringify(formData));
-            if (submissionData.bio_data.age === '') submissionData.bio_data.age = null;
             if (submissionData.bio_data.email === '') submissionData.bio_data.email = null;
 
             const response = await api.post('/members/apply', submissionData);
@@ -183,23 +200,13 @@ const MembershipRequest = () => {
                             </div>
                         </div>
 
-                        <Input label="Age" type="number" value={formData.bio_data.age} onChange={(e) => updateBioData('age', e.target.value)} />
                         <Input label="Date of Birth" type="date" value={formData.bio_data.dob} onChange={(e) => updateBioData('dob', e.target.value)} />
-                        {formData.requested_role === 'PERMANENT' && (
-                            <Input label="Sub-Sect" value={formData.bio_data.sub_sect} onChange={(e) => updateBioData('sub_sect', e.target.value)} placeholder="e.g. 6000N" />
-                        )}
-                    </div>
-                );
-            case 2:
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                        <Input label="Address" value={formData.bio_data.address} onChange={(e) => updateBioData('address', e.target.value)} icon={<MapPin className="h-4 w-4" />} />
-                        <Input label="Cell No" value={formData.bio_data.cell_no} onChange={(e) => updateBioData('cell_no', e.target.value)} icon={<Phone className="h-4 w-4" />} />
                         <Input label="Email" type="email" value={formData.bio_data.email} onChange={(e) => updateBioData('email', e.target.value)} icon={<Mail className="h-4 w-4" />} />
+                        <Input label="Address" value={formData.bio_data.address} onChange={(e) => updateBioData('address', e.target.value)} icon={<MapPin className="h-4 w-4" />} />
                         <Input label="Occupation" value={formData.bio_data.occupation} onChange={(e) => updateBioData('occupation', e.target.value)} icon={<Briefcase className="h-4 w-4" />} />
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Zonal Committee</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Zone</label>
                             <select
                                 className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm text-gray-900 font-medium focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-primary-light)]/20 transition-all duration-300 focus:border-[var(--color-primary)] outline-none"
                                 value={formData.bio_data.zonal_committee}
@@ -214,7 +221,7 @@ const MembershipRequest = () => {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Regional Committee</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Region</label>
                             <select
                                 className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm text-gray-900 font-medium focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-primary-light)]/20 transition-all duration-300 focus:border-[var(--color-primary)] outline-none"
                                 value={formData.bio_data.regional_committee}
@@ -229,7 +236,7 @@ const MembershipRequest = () => {
                         </div>
                     </div>
                 );
-            case 3:
+            case 2:
                 return (
                     <div className="py-6 space-y-6">
                         <div className="bg-[var(--color-primary)]/5 p-6 rounded-3xl border border-[var(--color-primary)]/10 flex flex-col items-center gap-4 text-center">
@@ -301,7 +308,7 @@ const MembershipRequest = () => {
                         />
                     </div>
                 );
-            case 4:
+            case 3:
                 return (
                     <div className="py-6 space-y-4">
                         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
@@ -329,13 +336,111 @@ const MembershipRequest = () => {
                                 <span className="font-bold text-green-600 truncate">{formData.bio_data.payment_proof_url || 'Not provided'}</span>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 italic text-center">By submitting, you agree that all information provided is accurate and belongs to you.</p>
+                        <p className="text-xs text-gray-400 italic text-center mt-6">By submitting, you agree that all information provided is accurate and belongs to you.</p>
                     </div>
                 );
             default:
                 return null;
         }
     };
+
+    if (statusLoading) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+            </div>
+        );
+    }
+
+    if (isSubmitted && submittedData) {
+        const data = submittedData.application_data || {};
+        const isApproved = submittedData.approval_status === 'APPROVED';
+        const isRejected = submittedData.approval_status === 'REJECTED';
+
+        return (
+            <div className="min-h-screen bg-gray-50/50 py-12 px-4">
+                <div className="max-w-3xl mx-auto space-y-8">
+
+                    {/* Status Header */}
+                    <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-xl text-center space-y-4 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+                        <div className="w-20 h-20 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center mb-6 ring-8 ring-amber-50/50">
+                            {isApproved ? <CheckCircle2 size={40} className="text-green-500" /> : <Info size={40} />}
+                        </div>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                            {isApproved ? 'Application Approved' : isRejected ? 'Application Rejected' : 'Application Under Review'}
+                        </h1>
+                        <p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
+                            {isApproved
+                                ? 'Congratulations! You are now an official member. Head over to the dashboard to access all features.'
+                                : isRejected
+                                    ? `Your application was not approved. Reason: ${submittedData.admin_notes || 'Not specified'}`
+                                    : 'Thank you for submitting your details. Our committee is currently reviewing your application. We will notify you once your membership is approved.'}
+                        </p>
+
+                        {isApproved && (
+                            <Button onClick={() => navigate('/dashboard')} className="mt-6 px-8 h-12 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20">
+                                Go to Dashboard
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Submitted Details */}
+                    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+                        <div className="bg-gray-50/80 px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900">Submitted Details</h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Application #{submittedData.id.slice(0, 8)}</p>
+                            </div>
+                            <span className="px-4 py-1.5 bg-gray-200/50 text-gray-600 rounded-full text-[10px] font-black uppercase tracking-widest">Read Only</span>
+                        </div>
+
+                        <div className="p-8 grid md:grid-cols-2 gap-x-12 gap-y-8">
+                            {data.photo_url && (
+                                <div className="md:col-span-2 flex items-center gap-6 pb-8 border-b border-gray-100">
+                                    <img src={data.photo_url} alt="Profile" className="w-24 h-24 rounded-2xl object-cover shadow-md border border-gray-200" />
+                                    <div>
+                                        <h4 className="text-xl font-black text-gray-900">{data.full_name}</h4>
+                                        <p className="text-sm font-bold text-[var(--color-primary)] mt-1">{submittedData.requested_role} MEMBER</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-6">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Father/Guardian</span>
+                                    <span className="font-bold text-gray-900">{data.father_guardian_name || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Date of Birth</span>
+                                    <span className="font-bold text-gray-900">{data.dob || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Email</span>
+                                    <span className="font-bold text-gray-900">{data.email || 'N/A'}</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Zone / Region</span>
+                                    <span className="font-bold text-gray-900">{data.zonal_committee || 'N/A'} / {data.regional_committee || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Occupation</span>
+                                    <span className="font-bold text-gray-900">{data.occupation || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Address</span>
+                                    <span className="font-bold text-gray-900 block leading-relaxed">{data.address || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-[calc(100vh-120px)] bg-gray-50 py-12 px-4">

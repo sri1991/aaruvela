@@ -13,6 +13,8 @@ const Navbar = () => {
         { name: 'Home', path: '/', icon: <Home size={16} /> },
         { name: 'About Us', path: '/about' },
         { name: 'Administration', path: '/administration' },
+        { name: 'Members', path: '/members' },
+        { name: 'Donation', path: '/donations' },
         // { name: 'Membership', path: '/membership' },
         // { name: 'Services', path: '/services' },
         // { name: 'Magazine', path: '/magazine' },

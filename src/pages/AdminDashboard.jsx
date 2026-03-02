@@ -45,10 +45,18 @@ const AdminDashboard = () => {
                 admin_notes: 'Approved via dashboard'
             });
             toast.success(response.data.message);
-            setSelectedRequest(null);
+            if (selectedRequest?.user_id === userId) {
+                setSelectedRequest(null);
+            }
             fetchRequests();
         } catch (error) {
-            toast.error(error.response?.data?.detail || 'Action failed');
+            const detail = error.response?.data?.detail;
+            const message = Array.isArray(detail)
+                ? detail.map(d => d.msg).join(', ')
+                : typeof detail === 'string'
+                    ? detail
+                    : `Failed to ${action.toLowerCase()} request`;
+            toast.error(message);
         } finally {
             setActionLoading(null);
         }
@@ -214,7 +222,6 @@ const AdminDashboard = () => {
                                             <DetailItem label="Father/Guardian" value={selectedRequest.application_data.father_guardian_name} />
                                             <DetailItem label="Age" value={selectedRequest.application_data.age} />
                                             <DetailItem label="DOB" value={selectedRequest.application_data.dob} />
-                                            <DetailItem label="Sub Sect" value={selectedRequest.application_data.sub_sect} />
                                         </div>
                                     </div>
 
@@ -326,7 +333,7 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Regional Committee</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Region</label>
                                     <select
                                         className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
                                         value={newMember.regional_committee}

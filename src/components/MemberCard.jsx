@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, MapPin, Award, User, QrCode } from 'lucide-react';
+import logoLeft from '../assets/logo-left-main.jpg';
 
 const MemberCard = ({ user }) => {
     if (!user) return null;
@@ -49,8 +50,8 @@ const MemberCard = ({ user }) => {
                 {/* Card Header - Official Style */}
                 <div className="bg-[#0F172A] px-6 py-3 flex items-center justify-between border-b-2 border-amber-500/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-inner">
-                            <ShieldCheck className="text-[#0F172A]" size={28} />
+                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-gray-200">
+                            <img src={logoLeft} alt="Logo" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <div>
                             <h1 className="text-white font-black text-sm tracking-[0.2em] leading-tight">PARISHAT</h1>

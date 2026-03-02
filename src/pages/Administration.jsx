@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Users, Phone, BadgeCheck, FileText, MessageSquare } from 'lucide-react';
 import rcImage from '../assets/administration-rc.jpg';
 import chairmanMessagePdf from '../assets/6000N Pamplet.pdf';
+import logoLeft from '../assets/logo-left-main.jpg';
 
 const MemberCard = ({ name, post, mobile, image, isExecutive }) => (
-    <div className={`p-4 rounded-xl border ${isExecutive ? 'border-l-4 border-l-[var(--color-secondary)] bg-blue-50' : 'border-l-4 border-l-yellow-400 bg-yellow-50'} shadow-sm hover:shadow-md transition-shadow flex items-center gap-4`}>
-        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-gray-200">
+    <div className={`p-3 md:p-4 rounded-xl border ${isExecutive ? 'border-l-4 border-l-[var(--color-secondary)] bg-blue-50' : 'border-l-4 border-l-yellow-400 bg-yellow-50'} shadow-sm hover:shadow-md transition-shadow flex items-center gap-3`}>
+        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-gray-200">
             <img
                 src={image || `https://placehold.co/100x100?text=${name.charAt(0)}`}
                 alt={name}
@@ -13,17 +14,17 @@ const MemberCard = ({ name, post, mobile, image, isExecutive }) => (
                 onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/100x100?text=${name.charAt(0)}`; }}
             />
         </div>
-        <div>
-            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                {name}
-                {isExecutive && <BadgeCheck size={16} className="text-[var(--color-secondary)]" />}
+        <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-gray-800 text-sm md:text-base flex items-start gap-1 flex-wrap leading-snug">
+                <span className="break-words">{name}</span>
+                {isExecutive && <BadgeCheck size={14} className="text-[var(--color-secondary)] shrink-0 mt-0.5" />}
             </h3>
-            {post && <p className={`${isExecutive ? 'text-[var(--color-primary-dark)]' : 'text-yellow-700'} font-medium text-sm mb-1`}>{post}</p>}
+            {post && <p className={`${isExecutive ? 'text-[var(--color-primary-dark)]' : 'text-yellow-700'} font-medium text-xs md:text-sm mb-1`}>{post}</p>}
             {mobile && (
-                <div className="flex items-center gap-2 text-gray-600 text-sm">
-                    <Phone size={14} />
+                <a href={`tel:${mobile}`} className="flex items-center gap-1.5 text-gray-600 text-xs md:text-sm hover:text-[var(--color-primary)] transition-colors">
+                    <Phone size={12} className="shrink-0" />
                     <span>{mobile}</span>
-                </div>
+                </a>
             )}
         </div>
     </div>
@@ -36,17 +37,17 @@ const Administration = () => {
 
     // Data provided by User
     const foundingMembers = [
-        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", mobile: "9849476726", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/venugopal.jpeg" },
-        { name: "Chiruvolu Srinivasarao", mobile: "9885063577", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/ChSrinivasarao.jpeg" },
-        { name: "Chayanam Srinivasa Murthy", mobile: "9440326363", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Chayanam.jpeg" },
-        { name: "Chiruvolu Satya Srinivas", mobile: "9491223344", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/chsrinivas2.jpeg" },
-        { name: "Kunderu Kanubabu", mobile: "8309874005", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/kanubabu.jpeg" },
-        { name: "Vadrevu Sarabharaju", mobile: "9866103483", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Sarabharaju.jpeg" },
-        { name: "Nadakuditi Sreeramachandra Murthy", mobile: "9848645899", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Nadakuditi.jpeg" },
-        { name: "Nerella Gnana Satya Venkatanarayana", mobile: "9848747447", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Nerella.jpeg" },
-        { name: "Vadrevu Srinivas", mobile: "7997459859", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Vadrevu Srinivas.jpeg" },
-        { name: "Ventrapragada Venugopalarao", mobile: "9440097872", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Ventrapragada.jpeg" },
-        { name: "Koochimanchi Sasidhara Sriram", mobile: "9246832468", image: "https://github.com/sri1991/aaruvela/blob/main/src/assets/foundingmembers/Kuchimanchi.jpeg" },
+        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", mobile: "9849476726", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/venugopal.jpeg" },
+        { name: "Chiruvolu Srinivasarao", mobile: "9885063577", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/ChSrinivasarao.jpeg" },
+        { name: "Chayanam Srinivasa Murthy", mobile: "9440326363", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Chayanam.jpeg" },
+        { name: "Chiruvolu Satya Srinivas", mobile: "9491223344", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/chsrinivas2.jpeg" },
+        { name: "Kunderu Kanubabu", mobile: "8309874005", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/kanubabu.jpeg" },
+        { name: "Vadrevu Sarabharaju", mobile: "9866103483", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Sarabharaju.jpeg" },
+        { name: "Nadakuditi Sreeramachandra Murthy", mobile: "9848645899", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Nadakuditi.jpeg" },
+        { name: "Nerella Gnana Satya Venkatanarayana", mobile: "9848747447", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Nerella.jpeg" },
+        { name: "Vadrevu Srinivas", mobile: "7997459859", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Vadrevu%20Srinivas.jpeg" },
+        { name: "Ventrapragada Venugopalarao", mobile: "9440097872", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Ventrapragada.jpeg" },
+        { name: "Koochimanchi Sasidhara Sriram", mobile: "9246832468", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Kuchimanchi.jpeg" },
     ];
 
     const executiveMembers = [
@@ -67,8 +68,8 @@ const Administration = () => {
         { id: 'founding', label: 'Founding Members' },
         { id: 'executive', label: 'Central Executive' },
         { id: 'divisional', label: 'Divisional Committee' },
-        { id: 'zonal', label: 'Zonal Committee' },
-        { id: 'regional', label: 'Regional' },
+        { id: 'zonal', label: 'Zone' },
+        { id: 'regional', label: 'Region' },
         { id: 'legal', label: 'Legal Details' },
         { id: 'message', label: 'Chairman Message' },
         { id: 'account', label: 'Account' },
@@ -97,8 +98,8 @@ const Administration = () => {
                 {activeTab === 'founding' && (
                     <section className="animate-in fade-in zoom-in-95 duration-300">
                         <div className="flex items-center gap-3 mb-6 border-b pb-4 border-yellow-100">
-                            <div className="p-3 bg-yellow-100 text-yellow-700 rounded-full">
-                                <Users size={24} />
+                            <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm border border-yellow-200 p-1 flex items-center justify-center">
+                                <img src={logoLeft} alt="Parishat Logo" className="w-full h-full object-contain" />
                             </div>
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800">

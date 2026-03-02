@@ -8,6 +8,8 @@ import AuthPage from './pages/AuthPage.jsx';
 import MembershipRequest from './pages/MembershipRequest.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import MemberDashboard from './pages/MemberDashboard.jsx';
+import Donations from './pages/Donations.jsx';
+import Members from './pages/Members.jsx';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -49,6 +51,8 @@ function App() {
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/administration" element={<Administration />} />
+              <Route path="/donations" element={<Donations />} />
+              <Route path="/members" element={<Members />} />
 
               <Route path="/membership" element={
                 <ProtectedRoute status="PENDING">
