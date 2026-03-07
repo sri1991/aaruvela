@@ -340,7 +340,7 @@ const AdminDashboard = () => {
                                         onChange={(e) => setNewMember({ ...newMember, regional_committee: e.target.value })}
                                     >
                                         <option value="">Select Region</option>
-                                        {['Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
+                                        {['Andhra', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
                                             <option key={opt} value={opt}>{opt}</option>
                                         ))}
                                     </select>

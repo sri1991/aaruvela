@@ -25,6 +25,8 @@ const MembershipRequest = () => {
         bio_data: {
             full_name: '',
             father_guardian_name: '',
+            gotram: '',
+            sub_sect: '',
             dob: '',
             occupation: '',
             star_pada: '',
@@ -165,6 +167,19 @@ const MembershipRequest = () => {
                         <Input label="Your Name" value={formData.bio_data.full_name} onChange={(e) => updateBioData('full_name', e.target.value)} icon={<User className="h-4 w-4" />} />
                         <Input label="Father / Guardian Name" value={formData.bio_data.father_guardian_name} onChange={(e) => updateBioData('father_guardian_name', e.target.value)} icon={<User className="h-4 w-4" />} />
 
+                        {/* Gotram for PERMANENT and NORMAL */}
+                        {['PERMANENT', 'NORMAL'].includes(formData.requested_role) && (
+                            <Input label="Gotram" value={formData.bio_data.gotram} onChange={(e) => updateBioData('gotram', e.target.value)} icon={<Info className="h-4 w-4" />} />
+                        )}
+
+                        {/* Gotram + Sub-Sect for ASSOCIATED */}
+                        {formData.requested_role === 'ASSOCIATED' && (
+                            <>
+                                <Input label="Gotram" value={formData.bio_data.gotram} onChange={(e) => updateBioData('gotram', e.target.value)} icon={<Info className="h-4 w-4" />} />
+                                <Input label="Sub-Sect" value={formData.bio_data.sub_sect} onChange={(e) => updateBioData('sub_sect', e.target.value)} icon={<Info className="h-4 w-4" />} />
+                            </>
+                        )}
+
                         <div className="md:col-span-2 p-6 border-2 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/50 hover:bg-gray-50 transition-all group">
                             <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 block mb-3 ml-1">Profile Photo (Passport size)</label>
                             <div className="flex items-center gap-6">
@@ -229,7 +244,7 @@ const MembershipRequest = () => {
                                 required
                             >
                                 <option value="" disabled hidden>Select Region</option>
-                                {['Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
+                                {['Andhra', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
                                 ))}
                             </select>
