@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../components/ui';
-import { User, Users, Briefcase, MapPin, Phone, Mail, Calendar, Info, FileText, Smartphone, Camera, Loader2, CheckCircle2, UploadCloud } from 'lucide-react';
+import { User, Users, Briefcase, MapPin, Mail, Info, FileText, Smartphone, Camera, Loader2, CheckCircle2, UploadCloud } from 'lucide-react';
 import api from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -91,7 +91,7 @@ const MembershipRequest = () => {
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
             const filePath = `${type}/${fileName}`;
 
-            const { error: uploadError, data } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('membership')
                 .upload(filePath, file);
 
@@ -112,6 +112,19 @@ const MembershipRequest = () => {
     };
 
     const handleNext = () => {
+        if (step === 1) {
+            if (!formData.bio_data.dob) {
+                toast.error('Date of Birth is required.');
+                return;
+            }
+            const dob = new Date(formData.bio_data.dob);
+            const today = new Date();
+            const age18 = new Date(dob.getFullYear() + 18, dob.getMonth(), dob.getDate());
+            if (today < age18) {
+                toast.error('You must be at least 18 years old to apply for membership.');
+                return;
+            }
+        }
         if (step < STEPS.length - 1) setStep(step + 1);
     };
 
@@ -122,9 +135,12 @@ const MembershipRequest = () => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Clean data: convert empty strings to null for optional/numeric fields to avoid 422 error
+            // Clean data: convert empty strings to null for optional/typed fields to avoid 422 error
             const submissionData = JSON.parse(JSON.stringify(formData));
-            if (submissionData.bio_data.email === '') submissionData.bio_data.email = null;
+            const nullIfEmpty = ['email', 'tob', 'annual_income'];
+            nullIfEmpty.forEach(field => {
+                if (submissionData.bio_data[field] === '') submissionData.bio_data[field] = null;
+            });
 
             const response = await api.post('/members/apply', submissionData);
             toast.success(response.data.message);
@@ -215,7 +231,7 @@ const MembershipRequest = () => {
                             </div>
                         </div>
 
-                        <Input label="Date of Birth" type="date" value={formData.bio_data.dob} onChange={(e) => updateBioData('dob', e.target.value)} />
+                        <Input label="Date of Birth" type="date" value={formData.bio_data.dob} onChange={(e) => updateBioData('dob', e.target.value)} max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]} />
                         <Input label="Email" type="email" value={formData.bio_data.email} onChange={(e) => updateBioData('email', e.target.value)} icon={<Mail className="h-4 w-4" />} />
                         <Input label="Address" value={formData.bio_data.address} onChange={(e) => updateBioData('address', e.target.value)} icon={<MapPin className="h-4 w-4" />} />
                         <Input label="Occupation" value={formData.bio_data.occupation} onChange={(e) => updateBioData('occupation', e.target.value)} icon={<Briefcase className="h-4 w-4" />} />
@@ -261,6 +277,13 @@ const MembershipRequest = () => {
                             <div>
                                 <h4 className="text-lg font-black text-gray-900">Scan to Pay</h4>
                                 <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">Scan the QR code below or use the details to pay your membership fee. Save the receipt to upload below.</p>
+                            </div>
+                            <div className="bg-white rounded-2xl px-6 py-3 border border-[var(--color-primary)]/15 shadow-sm">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Membership Fee</p>
+                                <p className="text-3xl font-black text-[var(--color-primary)]">
+                                    ₹{formData.requested_role === 'PERMANENT' ? '5,000' : '100'}
+                                </p>
+                                <p className="text-[10px] text-gray-400 mt-1">{formData.requested_role} membership</p>
                             </div>
                             <div className="relative group">
                                 <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-primary)] to-amber-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { User, MapPin, Award, Loader2, Search, Phone } from 'lucide-react';
 
@@ -71,9 +71,10 @@ const Members = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    const roles = ['ALL', 'PERMANENT', 'NORMAL', 'ASSOCIATED'];
+    const roles = ['ALL', 'PERMANENT', 'NORMAL'];
 
     const filtered = members.filter(m => {
+        if (m.role === 'ASSOCIATED') return false;
         const matchesSearch =
             !search ||
             m.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -89,7 +90,7 @@ const Members = () => {
                 <div className="mb-6">
                     <h1 className="text-2xl font-black text-gray-900">Active Members</h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        {loading ? '...' : `${members.length} active member${members.length !== 1 ? 's' : ''}`}
+                        {loading ? '...' : `${members.filter(m => m.role !== 'ASSOCIATED').length} active member${members.filter(m => m.role !== 'ASSOCIATED').length !== 1 ? 's' : ''}`}
                     </p>
                 </div>
 

@@ -77,6 +77,13 @@ class LoginRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Request model for members updating their personal details"""
+    full_name: Optional[str] = None
+    father_guardian_name: Optional[str] = None
+    gotram: Optional[str] = None
+    dob: Optional[str] = None
+    email: Optional[str] = None
     address: Optional[str] = None
     occupation: Optional[str] = None
+    zonal_committee: Optional[str] = None
+    regional_committee: Optional[str] = None
     photo_url: Optional[str] = None

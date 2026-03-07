@@ -268,7 +268,7 @@ async def get_current_user_info(user_id: str = Depends(get_current_user_id)):
 
     result = await run_query(
         lambda: supabase.table("users")
-        .select("id, identifier, phone, full_name, role, status, member_id, joined_at, created_at, cell_no, email, regional_committee, zonal_committee, photo_url, occupation, address, dob")
+        .select("id, identifier, phone, full_name, father_guardian_name, gotram, role, status, member_id, joined_at, created_at, cell_no, email, regional_committee, zonal_committee, photo_url, occupation, address, dob")
         .eq("id", user_id)
         .single()
         .execute()

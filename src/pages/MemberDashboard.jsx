@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useAuth } from '../features/auth/AuthContext';
 import MemberCard from '../components/MemberCard';
 import { Button, Input } from '../components/ui';
-import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Settings, Bell, Camera, UploadCloud, Loader2, X } from 'lucide-react';
+import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -12,18 +12,34 @@ const MemberDashboard = () => {
     const { user, signOut, refreshUser } = useAuth();
     const cardRef = useRef(null);
     const [isEditing, setIsEditing] = React.useState(false);
+    const [isChangingPin, setIsChangingPin] = React.useState(false);
+    const [pinForm, setPinForm] = React.useState({ newPin: '', confirmPin: '' });
     const [uploading, setUploading] = React.useState(false);
     const [editForm, setEditForm] = React.useState({
+        full_name: '',
+        father_guardian_name: '',
+        gotram: '',
+        dob: '',
+        email: '',
         address: '',
         occupation: '',
+        zonal_committee: '',
+        regional_committee: '',
         photo_url: ''
     });
 
     React.useEffect(() => {
         if (user) {
             setEditForm({
+                full_name: user.full_name || '',
+                father_guardian_name: user.father_guardian_name || '',
+                gotram: user.gotram || '',
+                dob: user.dob || '',
+                email: user.email || '',
                 address: user.address || '',
                 occupation: user.occupation || '',
+                zonal_committee: user.zonal_committee || '',
+                regional_committee: user.regional_committee || '',
                 photo_url: user.photo_url || ''
             });
         }
@@ -82,10 +98,11 @@ const MemberDashboard = () => {
         const loadToast = toast.loading('Saving profile...');
         try {
             const submitData = { ...editForm };
-            // Convert empty strings to null to avoid sending empty updates if not needed
-            if (submitData.address === '') submitData.address = null;
-            if (submitData.occupation === '') submitData.occupation = null;
-            if (submitData.photo_url === '') submitData.photo_url = null;
+            // Convert empty strings to null for optional fields
+            ['father_guardian_name', 'gotram', 'dob', 'email', 'address', 'occupation',
+             'zonal_committee', 'regional_committee', 'photo_url'].forEach(f => {
+                if (submitData[f] === '') submitData[f] = null;
+            });
 
             await api.put('/auth/me', submitData);
             await refreshUser(); // Fetch fresh data
@@ -94,6 +111,26 @@ const MemberDashboard = () => {
         } catch (error) {
             console.error('Update error:', error);
             toast.error('Failed to update profile', { id: loadToast });
+        }
+    };
+
+    const handleChangePin = async () => {
+        if (!pinForm.newPin || pinForm.newPin.length !== 4 || !/^\d{4}$/.test(pinForm.newPin)) {
+            toast.error('PIN must be exactly 4 digits.');
+            return;
+        }
+        if (pinForm.newPin !== pinForm.confirmPin) {
+            toast.error('PINs do not match.');
+            return;
+        }
+        const loadToast = toast.loading('Updating PIN...');
+        try {
+            await api.post('/auth/set-pin', { pin: pinForm.newPin });
+            toast.success('PIN updated successfully!', { id: loadToast });
+            setIsChangingPin(false);
+            setPinForm({ newPin: '', confirmPin: '' });
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Failed to update PIN', { id: loadToast });
         }
     };
 
@@ -169,16 +206,30 @@ const MemberDashboard = () => {
                         <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-sm font-black text-gray-900">Personal Details</h3>
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] hover:underline"
-                                >
-                                    Edit Profile
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setIsChangingPin(true)}
+                                        className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-700 hover:underline"
+                                    >
+                                        Change PIN
+                                    </button>
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] hover:underline"
+                                    >
+                                        Edit Profile
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-4">
                                 <DetailRow label="Mobile" value={user.phone} />
                                 <DetailRow label="Email" value={user.email} />
+                                <DetailRow label="Father / Guardian" value={user.father_guardian_name} />
+                                <DetailRow label="Gotram" value={user.gotram} />
+                                <DetailRow label="Date of Birth" value={user.dob} />
+                                <DetailRow label="Occupation" value={user.occupation} />
+                                <DetailRow label="Zone" value={user.zonal_committee} />
+                                <DetailRow label="Region" value={user.regional_committee} />
                                 <DetailRow label="Joined" value={new Date(user.created_at).toLocaleDateString()} />
                             </div>
                         </div>
@@ -224,23 +275,62 @@ const MemberDashboard = () => {
                 </div>
             </div>
 
+            {/* Change PIN Modal */}
+            {isChangingPin && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex bg-gray-50 border-b border-gray-100 items-center justify-between p-6">
+                            <h2 className="text-xl font-black text-gray-900">Change PIN</h2>
+                            <button onClick={() => { setIsChangingPin(false); setPinForm({ newPin: '', confirmPin: '' }); }} className="text-gray-400 hover:text-gray-900 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-xs text-gray-500">Enter a new 4-digit PIN for your account.</p>
+                            <Input
+                                label="New PIN"
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={pinForm.newPin}
+                                onChange={(e) => setPinForm({ ...pinForm, newPin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                                placeholder="4-digit PIN"
+                            />
+                            <Input
+                                label="Confirm New PIN"
+                                type="password"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={pinForm.confirmPin}
+                                onChange={(e) => setPinForm({ ...pinForm, confirmPin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                                placeholder="Re-enter PIN"
+                            />
+                            <div className="pt-2 flex gap-3">
+                                <Button onClick={() => { setIsChangingPin(false); setPinForm({ newPin: '', confirmPin: '' }); }} variant="outline" className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-bold text-gray-600">Cancel</Button>
+                                <Button onClick={handleChangePin} className="flex-1 h-12 rounded-xl font-black tracking-widest uppercase text-xs">Update PIN</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Edit Profile Modal */}
             {isEditing && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex bg-gray-50 border-b border-gray-100 items-center justify-between p-6">
+                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        <div className="flex bg-gray-50 border-b border-gray-100 items-center justify-between p-6 shrink-0">
                             <h2 className="text-xl font-black text-gray-900">Edit Profile</h2>
                             <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-6">
+                        <div className="p-6 space-y-5 overflow-y-auto">
 
-                            {/* Photo Upload Section */}
+                            {/* Photo Upload */}
                             <div>
                                 <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 block mb-3">Profile Photo</label>
                                 <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center relative shadow-inner">
+                                    <div className="w-20 h-20 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center relative shadow-inner shrink-0">
                                         {editForm.photo_url ? (
                                             <img src={editForm.photo_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
@@ -253,17 +343,8 @@ const MemberDashboard = () => {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <input
-                                            type="file"
-                                            id="edit-photo-upload"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleFileUpload}
-                                        />
-                                        <label
-                                            htmlFor="edit-photo-upload"
-                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 cursor-pointer hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all shadow-sm active:scale-95"
-                                        >
+                                        <input type="file" id="edit-photo-upload" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                        <label htmlFor="edit-photo-upload" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 cursor-pointer hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all shadow-sm active:scale-95">
                                             <UploadCloud size={16} />
                                             {editForm.photo_url ? 'Change Photo' : 'Upload New'}
                                         </label>
@@ -272,21 +353,39 @@ const MemberDashboard = () => {
                                 </div>
                             </div>
 
-                            <Input
-                                label="Address"
-                                value={editForm.address}
-                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                placeholder="Your full address"
-                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <Input label="Full Name" value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} icon={<User className="h-4 w-4" />} placeholder="Your full name" />
+                                <Input label="Father / Guardian Name" value={editForm.father_guardian_name} onChange={(e) => setEditForm({ ...editForm, father_guardian_name: e.target.value })} icon={<User className="h-4 w-4" />} placeholder="Father or guardian name" />
+                                <Input label="Gotram" value={editForm.gotram} onChange={(e) => setEditForm({ ...editForm, gotram: e.target.value })} icon={<Info className="h-4 w-4" />} placeholder="Gotram" />
+                                <Input label="Date of Birth" type="date" value={editForm.dob} onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })} max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]} />
+                                <Input label="Email" type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} icon={<Mail className="h-4 w-4" />} placeholder="Email address" />
+                                <Input label="Occupation" value={editForm.occupation} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })} icon={<Briefcase className="h-4 w-4" />} placeholder="Your profession" />
+                                <div className="sm:col-span-2">
+                                    <Input label="Address" value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} icon={<MapPin className="h-4 w-4" />} placeholder="Your full address" />
+                                </div>
 
-                            <Input
-                                label="Occupation"
-                                value={editForm.occupation}
-                                onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
-                                placeholder="Your profession"
-                            />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Zone</label>
+                                    <select className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm text-gray-900 font-medium focus:outline-none focus:border-[var(--color-primary)] transition-all" value={editForm.zonal_committee} onChange={(e) => setEditForm({ ...editForm, zonal_committee: e.target.value })}>
+                                        <option value="">Select Zone</option>
+                                        {['Uttar Andhra', 'Rayalaseema', 'Dakshina Kosta Andhra', 'Madhya Kosta'].map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            <div className="pt-4 flex gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-gray-600 ml-1">Region</label>
+                                    <select className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm text-gray-900 font-medium focus:outline-none focus:border-[var(--color-primary)] transition-all" value={editForm.regional_committee} onChange={(e) => setEditForm({ ...editForm, regional_committee: e.target.value })}>
+                                        <option value="">Select Region</option>
+                                        {['Andhra', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="pt-2 flex gap-3 sticky bottom-0 bg-white pb-1">
                                 <Button onClick={() => setIsEditing(false)} variant="outline" className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-bold text-gray-600 hover:bg-gray-50">Cancel</Button>
                                 <Button onClick={handleSaveProfile} className="flex-1 h-12 rounded-xl shadow-lg shadow-primary/20 font-black tracking-widest uppercase text-xs">Save Changes</Button>
                             </div>
