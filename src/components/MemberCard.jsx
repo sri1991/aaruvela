@@ -1,38 +1,9 @@
-import React from 'react';
 import { ShieldCheck, MapPin, Award, User, QrCode } from 'lucide-react';
 import logoLeft from '../assets/logo-left-main.jpg';
+import digitsign from '../assets/digitsign.jpeg';
 
 const MemberCard = ({ user }) => {
     if (!user) return null;
-
-    const roleThemes = {
-        'PERMANENT': {
-            gradient: 'from-[#0F172A] to-[#1E293B]',
-            accent: 'bg-amber-500',
-            text: 'text-amber-500',
-            border: 'border-amber-500/30'
-        },
-        'NORMAL': {
-            gradient: 'from-[#0F172A] to-[#1E293B]',
-            accent: 'bg-blue-500',
-            text: 'text-blue-500',
-            border: 'border-blue-500/30'
-        },
-        'ASSOCIATED': {
-            gradient: 'from-[#0F172A] to-[#1E293B]',
-            accent: 'bg-emerald-500',
-            text: 'text-emerald-500',
-            border: 'border-emerald-500/30'
-        },
-        'HEAD': {
-            gradient: 'from-[#1e1b4b] to-[#312e81]',
-            accent: 'bg-purple-500',
-            text: 'text-purple-500',
-            border: 'border-purple-500/30'
-        }
-    };
-
-    const theme = roleThemes[user.role] || roleThemes['NORMAL'];
 
     // Scale name font size based on length to prevent overflow
     const nameLen = user.full_name?.length || 0;
@@ -51,8 +22,8 @@ const MemberCard = ({ user }) => {
                     }} />
 
                 {/* Card Header */}
-                <div className="bg-[#0F172A] px-5 py-3 flex items-center justify-between border-b-2 border-amber-500/50">
-                    <div className="flex items-center gap-3">
+                <div className="bg-[#0F172A] px-5 py-3 flex items-center border-b-2 border-amber-500/50">
+                    <div className="flex items-center gap-3 flex-1">
                         <div className="w-11 h-11 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-gray-200 shrink-0">
                             <img src={logoLeft} alt="Logo" className="w-full h-full object-contain p-0.5" />
                         </div>
@@ -61,7 +32,7 @@ const MemberCard = ({ user }) => {
                             <p className="text-amber-500 text-[8px] font-black tracking-[0.25em] uppercase">Official Identity Document</p>
                         </div>
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="flex-1 flex flex-col items-end">
                         <p className="text-white/40 text-[7px] font-black uppercase tracking-widest">Digital Registry</p>
                         <p className="text-white text-[9px] font-bold tracking-wider">{user.role} MEMBER</p>
                     </div>
@@ -125,7 +96,7 @@ const MemberCard = ({ user }) => {
                             <div className="flex items-end gap-3">
                                 <div className="text-right">
                                     <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.15em] block">Signature of Authority</span>
-                                    <span className="text-[10px] font-serif italic text-[#0F172A] opacity-50 block mt-1">Parishat Head</span>
+                                    <img src={digitsign} alt="Signature" className="h-8 w-auto mt-1 ml-auto opacity-80 object-contain" />
                                 </div>
                                 <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1 opacity-70 shrink-0">
                                     <QrCode size={34} className="text-gray-400" />

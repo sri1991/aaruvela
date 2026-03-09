@@ -1,18 +1,53 @@
 import { useState } from 'react';
-import { User, Phone, MapPin, Heart } from 'lucide-react';
+import { User, Phone, MapPin, Heart, IndianRupee, Hash } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 import paymentQR from '../assets/6000N Payment.jpg';
 
 const Donations = () => {
     const [showQR, setShowQR] = useState(false);
-    const [form, setForm] = useState({ name: '', phone: '', city: '' });
+    const [submitting, setSubmitting] = useState(false);
+    const [form, setForm] = useState({ name: '', phone: '', place: '' });
+    const [payment, setPayment] = useState({ amount: '', reference: '' });
 
     const handleProceed = () => {
         if (!form.name.trim()) { toast.error('Please enter your name.'); return; }
         if (!form.phone.trim() || !/^\d{10}$/.test(form.phone.trim())) { toast.error('Please enter a valid 10-digit phone number.'); return; }
-        if (!form.city.trim()) { toast.error('Please enter your city.'); return; }
+        if (!form.place.trim()) { toast.error('Please enter your place.'); return; }
         setShowQR(true);
+    };
+
+    const handleConfirm = async () => {
+        if (!payment.amount || isNaN(payment.amount) || Number(payment.amount) <= 0) {
+            toast.error('Please enter a valid amount paid.');
+            return;
+        }
+        if (!payment.reference.trim()) {
+            toast.error('Please enter the payment reference / UTR number.');
+            return;
+        }
+
+        setSubmitting(true);
+        const { error } = await supabase.from('donations').insert({
+            donor_name: form.name.trim(),
+            phone: form.phone.trim(),
+            place: form.place.trim(),
+            amount: Number(payment.amount),
+            payment_reference: payment.reference.trim(),
+        });
+        setSubmitting(false);
+
+        if (error) {
+            console.error(error);
+            toast.error('Failed to record donation. Please try again.');
+            return;
+        }
+
+        toast.success('Donation recorded! Thank you for your contribution.');
+        setForm({ name: '', phone: '', place: '' });
+        setPayment({ amount: '', reference: '' });
+        setShowQR(false);
     };
 
     return (
@@ -46,11 +81,11 @@ const Donations = () => {
                                 placeholder="10-digit mobile number"
                             />
                             <Input
-                                label="City"
-                                value={form.city}
-                                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                                label="Place"
+                                value={form.place}
+                                onChange={(e) => setForm({ ...form, place: e.target.value })}
                                 icon={<MapPin className="h-4 w-4" />}
-                                placeholder="Your city"
+                                placeholder="Your place"
                             />
                             <Button onClick={handleProceed} className="w-full mt-2">
                                 Proceed to Pay
@@ -70,7 +105,30 @@ const Donations = () => {
                                     className="relative w-64 h-auto rounded-2xl shadow-xl border-4 border-white mx-auto"
                                 />
                             </div>
-                            <p className="text-xs text-gray-400">After payment, please share the screenshot with us at our contact number.</p>
+                            <p className="text-xs text-gray-400">After payment, fill in the details below and confirm.</p>
+
+                            <div className="space-y-3 text-left">
+                                <Input
+                                    label="Amount Paid (₹)"
+                                    type="number"
+                                    value={payment.amount}
+                                    onChange={(e) => setPayment({ ...payment, amount: e.target.value })}
+                                    icon={<IndianRupee className="h-4 w-4" />}
+                                    placeholder="e.g. 500"
+                                />
+                                <Input
+                                    label="Payment Reference / UTR No."
+                                    value={payment.reference}
+                                    onChange={(e) => setPayment({ ...payment, reference: e.target.value })}
+                                    icon={<Hash className="h-4 w-4" />}
+                                    placeholder="12-digit UTR or transaction ID"
+                                />
+                            </div>
+
+                            <Button onClick={handleConfirm} disabled={submitting} className="w-full">
+                                {submitting ? 'Saving...' : 'Confirm Donation'}
+                            </Button>
+
                             <button
                                 onClick={() => setShowQR(false)}
                                 className="text-xs text-gray-400 underline hover:text-gray-600 transition-colors"
