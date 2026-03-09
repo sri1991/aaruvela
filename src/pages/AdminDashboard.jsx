@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { Button, Input } from '../components/ui';
 import { toast } from 'react-hot-toast';
-import { CheckCircle, XCircle, User, Loader2, ShieldCheck, Plus, UserPlus } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ShieldCheck, Plus, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../features/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
-    const { signOut } = useAuth();
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
@@ -100,11 +100,18 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex items-center gap-4">
                         <Button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={() => navigate('/admin/onboard')}
                             className="bg-gray-900 hover:bg-black text-white px-6 rounded-2xl h-14 shadow-lg shadow-gray-200"
                         >
+                            <UserPlus size={18} className="mr-2" />
+                            Onboard Members
+                        </Button>
+                        <Button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-6 rounded-2xl h-14 shadow-sm"
+                        >
                             <Plus size={18} className="mr-2" />
-                            Add Member
+                            Quick Add
                         </Button>
                         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
                             <ShieldCheck className="text-green-600 h-6 w-6" />

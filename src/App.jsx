@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -7,6 +6,7 @@ import Administration from './pages/Administration';
 import AuthPage from './pages/AuthPage.jsx';
 import MembershipRequest from './pages/MembershipRequest.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import OnboardMembers from './pages/OnboardMembers.jsx';
 import MemberDashboard from './pages/MemberDashboard.jsx';
 import Donations from './pages/Donations.jsx';
 import Members from './pages/Members.jsx';
@@ -69,6 +69,12 @@ function App() {
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="HEAD">
                   <AdminDashboard />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/admin/onboard" element={
+                <ProtectedRoute requiredRole="HEAD">
+                  <OnboardMembers />
                 </ProtectedRoute>
               } />
 

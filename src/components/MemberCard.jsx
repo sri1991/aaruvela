@@ -95,7 +95,7 @@ const MemberCard = ({ user }) => {
                             </div>
                             <div className="flex items-end gap-3">
                                 <div className="text-right">
-                                    <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.15em] block">Signature of Authority</span>
+                                    <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.15em] block">President</span>
                                     <img src={digitsign} alt="Signature" className="h-8 w-auto mt-1 ml-auto opacity-80 object-contain" />
                                 </div>
                                 <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1 opacity-70 shrink-0">
