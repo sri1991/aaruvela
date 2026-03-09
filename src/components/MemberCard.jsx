@@ -34,114 +34,121 @@ const MemberCard = ({ user }) => {
 
     const theme = roleThemes[user.role] || roleThemes['NORMAL'];
 
-    return (
-        <div className="relative w-[450px] h-[280px] mx-auto group perspective-1000">
-            {/* Main Card Body */}
-            <div className="relative w-full h-full bg-white rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-200 flex flex-col">
+    // Scale name font size based on length to prevent overflow
+    const nameLen = user.full_name?.length || 0;
+    const nameFontClass = nameLen > 30 ? 'text-[13px]' : nameLen > 20 ? 'text-[15px]' : 'text-[17px]';
 
-                {/* Security Background Pattern (Guilloche effect) */}
+    return (
+        <div className="relative w-[480px] mx-auto">
+            {/* Main Card Body */}
+            <div className="relative w-full bg-white rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-200 flex flex-col">
+
+                {/* Security Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                     style={{
                         backgroundImage: `radial-gradient(circle at 2px 2px, black 1px, transparent 0)`,
                         backgroundSize: '12px 12px'
-                    }}>
-                </div>
+                    }} />
 
-                {/* Card Header - Official Style */}
-                <div className="bg-[#0F172A] px-6 py-3 flex items-center justify-between border-b-2 border-amber-500/50">
+                {/* Card Header */}
+                <div className="bg-[#0F172A] px-5 py-3 flex items-center justify-between border-b-2 border-amber-500/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-gray-200">
+                        <div className="w-11 h-11 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-gray-200 shrink-0">
                             <img src={logoLeft} alt="Logo" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <div>
                             <h1 className="text-white font-black text-sm tracking-[0.2em] leading-tight">PARISHAT</h1>
-                            <p className="text-amber-500 text-[8px] font-black tracking-[0.3em] uppercase">Official Identity Document</p>
+                            <p className="text-amber-500 text-[8px] font-black tracking-[0.25em] uppercase">Official Identity Document</p>
                         </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                         <p className="text-white/40 text-[7px] font-black uppercase tracking-widest">Digital Registry</p>
                         <p className="text-white text-[9px] font-bold tracking-wider">{user.role} MEMBER</p>
                     </div>
                 </div>
 
                 {/* Card Content Area */}
-                <div className="flex flex-1 p-5 gap-6 relative">
+                <div className="flex p-4 gap-5">
 
                     {/* Left Side: Photo & ID */}
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="w-32 h-36 bg-gray-50 rounded-xl border-2 border-gray-100 p-1 shadow-md overflow-hidden flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                        <div className="w-[110px] h-[130px] bg-gray-50 rounded-xl border-2 border-gray-100 shadow-md overflow-hidden flex items-center justify-center">
                             {user.photo_url ? (
-                                <img src={user.photo_url} alt={user.full_name} className="w-full h-full object-cover rounded-lg" />
+                                <img src={user.photo_url} alt={user.full_name} className="w-full h-full object-cover" />
                             ) : (
-                                <User className="text-gray-300" size={60} />
+                                <User className="text-gray-300" size={52} />
                             )}
                         </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Member ID</span>
-                            <span className="text-sm font-black text-[#0F172A] tracking-tighter">{user.member_id || 'PENDING'}</span>
+                        <div className="text-center">
+                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Member ID</span>
+                            <span className="text-[13px] font-black text-[#0F172A] tracking-tight">{user.member_id || 'PENDING'}</span>
                         </div>
                     </div>
 
                     {/* Right Side: Details */}
-                    <div className="flex-1 space-y-4 py-1">
-                        <div>
-                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Full Name</span>
-                            <h2 className="text-xl font-black text-[#0F172A] leading-tight border-b border-gray-100 pb-1">{user.full_name?.toUpperCase()}</h2>
+                    <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+                        {/* Name */}
+                        <div className="border-b border-gray-100 pb-2 mb-2">
+                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Full Name</span>
+                            <h2 className={`${nameFontClass} font-black text-[#0F172A] leading-snug`}>
+                                {user.full_name?.toUpperCase()}
+                            </h2>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {/* Zone & Region */}
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-2">
                             <div>
                                 <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Zone</span>
-                                <p className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
-                                    <MapPin size={10} className="text-amber-500" />
-                                    {user.zonal_committee || 'N/A'}
+                                <p className="text-[10px] font-bold text-gray-800 flex items-center gap-1 mt-0.5">
+                                    <MapPin size={9} className="text-amber-500 shrink-0" />
+                                    <span className="truncate">{user.zonal_committee || 'N/A'}</span>
                                 </p>
                             </div>
                             <div>
                                 <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Region</span>
-                                <p className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
-                                    <Award size={10} className="text-amber-500" />
-                                    {user.regional_committee || 'N/A'}
+                                <p className="text-[10px] font-bold text-gray-800 flex items-center gap-1 mt-0.5">
+                                    <Award size={9} className="text-amber-500 shrink-0" />
+                                    <span className="truncate">{user.regional_committee || 'N/A'}</span>
                                 </p>
-                            </div>
-                            <div className="col-span-2">
-                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Authorized Status</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[8px] font-black rounded-full border border-green-200 uppercase">Verified</span>
-                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-[8px] font-black rounded-full border border-gray-200 uppercase tracking-tighter">Active since 2026</span>
-                                </div>
                             </div>
                         </div>
 
-                        {/* Aadhaar-style bottom strip for DOB or Phone */}
-                        <div className="absolute bottom-4 right-5 flex items-center gap-4">
-                            <div className="text-right">
-                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em] block">Signature of Authority</span>
-                                <div className="mt-1 h-6 flex items-end justify-end">
-                                    <span className="text-[10px] font-serif italic text-[#0F172A] leading-none opacity-60">Parishat Head</span>
+                        {/* Status + Signature + QR */}
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block mb-1">Authorized Status</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[8px] font-black rounded-full border border-green-200 uppercase">Verified</span>
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[7px] font-black rounded-full border border-gray-200 uppercase">Active since 2026</span>
                                 </div>
                             </div>
-                            <div className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1.5 opacity-80">
-                                <QrCode size={40} className="text-gray-400" />
+                            <div className="flex items-end gap-3">
+                                <div className="text-right">
+                                    <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.15em] block">Signature of Authority</span>
+                                    <span className="text-[10px] font-serif italic text-[#0F172A] opacity-50 block mt-1">Parishat Head</span>
+                                </div>
+                                <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1 opacity-70 shrink-0">
+                                    <QrCode size={34} className="text-gray-400" />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Micro-text (Official Disclaimer) */}
-                <div className="bg-gray-50 px-6 py-2 border-t border-gray-100 flex justify-between items-center overflow-hidden">
-                    <p className="text-[6px] text-gray-400 font-bold uppercase tracking-[0.1em] whitespace-nowrap">
+                {/* Footer */}
+                <div className="bg-gray-50 px-5 py-1.5 border-t border-gray-100 flex justify-between items-center">
+                    <p className="text-[6px] text-gray-400 font-bold uppercase tracking-[0.08em] truncate pr-4">
                         This card is an official property of the Parishat Registry. If found, please return to any Zonal Office.
                     </p>
-                    <div className="flex items-center gap-1 pl-4 bg-gray-50">
-                        <ShieldCheck size={10} className="text-amber-500" />
-                        <span className="text-[7px] font-black text-gray-900 uppercase">Secure Document</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <ShieldCheck size={9} className="text-amber-500" />
+                        <span className="text-[7px] font-black text-gray-900 uppercase whitespace-nowrap">Secure Document</span>
                     </div>
                 </div>
             </div>
 
-            {/* Print Decoration (PVC Chip Effect) */}
-            <div className="absolute top-[4.5rem] right-6 w-8 h-6 bg-gradient-to-br from-amber-300 to-amber-500 rounded-md opacity-20 border border-amber-600/30"></div>
+            {/* PVC Chip Effect */}
+            <div className="absolute top-[3.8rem] right-5 w-7 h-5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-sm opacity-20 border border-amber-600/30"></div>
         </div>
     );
 };

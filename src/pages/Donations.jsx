@@ -22,14 +22,14 @@ const Donations = () => {
                     <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Heart className="w-8 h-8 text-orange-500" />
                     </div>
-                    <h1 className="text-2xl font-black text-gray-900">Donate to Aaruvela</h1>
+                    <h1 className="text-2xl font-black text-gray-900">Donate</h1>
                     <p className="text-sm text-gray-500 mt-2">Your contribution helps us serve the community.</p>
                 </div>
 
                 <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
                     {!showQR ? (
                         <div className="p-8 space-y-4">
-                            <h2 className="text-lg font-black text-gray-900 mb-6">Tell us about yourself</h2>
+                            <h2 className="text-lg font-black text-gray-900 mb-6">Donor details</h2>
                             <Input
                                 label="Full Name"
                                 value={form.name}
