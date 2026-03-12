@@ -1,6 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.auth.dependencies import get_current_user_id
+from app.auth.dependencies import get_current_user_id, require_active_status
 from app.db import get_supabase_client, run_query
 from app.members.models import MembershipApplicationRequest, MembershipApplicationResponse
 
@@ -76,6 +76,27 @@ async def get_active_members():
         .order("member_id")
         .execute()
     )
+    return result.data
+
+
+@router.get("/profile/{member_user_id}")
+async def get_member_profile(
+    member_user_id: str,
+    current_user: dict = Depends(require_active_status),
+):
+    """Get a specific active member's public profile. Requires caller to be an active member."""
+    supabase = get_supabase_client()
+    result = await run_query(
+        lambda: supabase.table("users")
+        .select("id, full_name, member_id, role, photo_url, zonal_committee, regional_committee, phone, gotram, occupation, joined_at")
+        .eq("id", member_user_id)
+        .eq("status", "ACTIVE")
+        .neq("role", "HEAD")
+        .single()
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     return result.data
 
 

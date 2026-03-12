@@ -1,5 +1,6 @@
 import logging
-from fastapi import FastAPI
+import traceback
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -10,6 +11,7 @@ from app.config import settings
 from app.auth.routes import router as auth_router, limiter
 from app.members.routes import router as members_router
 from app.admin.routes import router as admin_router
+from app.articles.routes import router as articles_router
 
 # Configure root logger for the application
 logging.basicConfig(
@@ -55,10 +57,28 @@ async def health_check():
     )
 
 
+# Global exception handler — ensures CORS headers are present even on 500s
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    allowed = settings.cors_origins_list
+    cors_origin = origin if origin in allowed else (allowed[0] if allowed else "")
+    logger.error("Unhandled exception on %s %s:\n%s", request.method, request.url.path, traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": cors_origin,
+            "Access-Control-Allow-Credentials": "true",
+        },
+    )
+
+
 # Register routers
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(members_router, prefix="/members", tags=["Membership"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
+app.include_router(articles_router, prefix="/articles", tags=["Articles"])
 
 
 if __name__ == "__main__":

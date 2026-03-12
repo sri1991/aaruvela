@@ -1,23 +1,34 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
-import { User, MapPin, Award, Loader2, Search, Phone } from 'lucide-react';
+import { useAuth } from '../features/auth/AuthContext';
+import { User, MapPin, Award, Loader2, Search, Phone, X, Briefcase, Calendar, Star, LogIn, Lock } from 'lucide-react';
 
 const roleColors = {
-    PERMANENT: { badge: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
-    NORMAL:    { badge: 'bg-blue-100 text-blue-700 border-blue-200',   dot: 'bg-blue-500' },
-    ASSOCIATED:{ badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
-    HEAD:      { badge: 'bg-purple-100 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
+    PERMANENT: { badge: 'bg-amber-100 text-amber-700 border-amber-200' },
+    NORMAL:    { badge: 'bg-blue-100 text-blue-700 border-blue-200' },
+    ASSOCIATED:{ badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    HEAD:      { badge: 'bg-purple-100 text-purple-700 border-purple-200' },
 };
 
-const MemberTile = ({ member }) => {
+const redactPhone = (phone) => {
+    if (!phone) return null;
+    const digits = phone.replace(/\D/g, '');
+    return '••••••' + digits.slice(-4);
+};
+
+const MemberTile = ({ member, onClick, isActiveMember }) => {
     const theme = roleColors[member.role] || roleColors.NORMAL;
     const initials = member.full_name
         ? member.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
         : '?';
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center gap-3 hover:shadow-md transition-shadow">
-            <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 overflow-hidden flex items-center justify-center">
+        <div
+            onClick={() => onClick(member)}
+            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center gap-3 hover:shadow-md hover:border-amber-200 transition-all cursor-pointer group"
+        >
+            <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 group-hover:border-amber-300 overflow-hidden flex items-center justify-center transition-colors">
                 {member.photo_url ? (
                     <img src={member.photo_url} alt={member.full_name} className="w-full h-full object-cover" />
                 ) : (
@@ -36,9 +47,13 @@ const MemberTile = ({ member }) => {
 
             <div className="w-full space-y-1 pt-2 border-t border-gray-50">
                 {member.phone && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <p className="text-xs flex items-center gap-1.5">
                         <Phone size={11} className="text-amber-500 shrink-0" />
-                        {member.phone}
+                        {isActiveMember ? (
+                            <span className="text-gray-500">{member.phone}</span>
+                        ) : (
+                            <span className="text-gray-300 tracking-widest font-mono">{redactPhone(member.phone)}</span>
+                        )}
                     </p>
                 )}
                 {member.zonal_committee && (
@@ -58,11 +73,142 @@ const MemberTile = ({ member }) => {
     );
 };
 
+const LoginPromptModal = ({ onClose }) => {
+    const navigate = useNavigate();
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <X size={20} />
+                </button>
+                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <LogIn size={28} className="text-amber-500" />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 mb-2">Members Only</h2>
+                <p className="text-gray-500 text-sm mb-6">
+                    View detailed member profiles by logging in as an active member.
+                </p>
+                <button
+                    onClick={() => navigate('/auth')}
+                    className="w-full bg-[var(--color-primary)] text-white py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity"
+                >
+                    Login / Sign Up
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const MemberProfileModal = ({ memberId, onClose }) => {
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        api.get(`/members/profile/${memberId}`)
+            .then(res => setProfile(res.data))
+            .catch(() => setError(true))
+            .finally(() => setLoading(false));
+    }, [memberId]);
+
+    const theme = profile ? (roleColors[profile.role] || roleColors.NORMAL) : roleColors.NORMAL;
+    const initials = profile?.full_name
+        ? profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : '?';
+
+    const formatDate = (iso) => {
+        if (!iso) return null;
+        return new Date(iso).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' });
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                {/* Top bar */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                    <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider">Member Profile</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="flex justify-center items-center py-16">
+                        <Loader2 className="animate-spin text-[var(--color-primary)] h-7 w-7" />
+                    </div>
+                ) : error ? (
+                    <p className="text-center text-gray-400 py-16 text-sm">Could not load profile.</p>
+                ) : profile ? (
+                    <div className="p-6">
+                        {/* Profile header */}
+                        <div className="flex items-center gap-5 mb-6">
+                            <div className="w-20 h-20 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                                {profile.photo_url ? (
+                                    <img src={profile.photo_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-2xl font-black text-gray-400">{initials}</span>
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="text-lg font-black text-gray-900 leading-tight">{profile.full_name}</h2>
+                                <p className="text-xs font-mono text-gray-400 mt-0.5">{profile.member_id}</p>
+                                <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider ${theme.badge}`}>
+                                    {profile.role}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+                            {profile.phone && (
+                                <div className="flex items-center gap-3 text-sm">
+                                    <Phone size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-700">{profile.phone}</span>
+                                </div>
+                            )}
+                            {(profile.zonal_committee || profile.regional_committee) && (
+                                <div className="flex items-center gap-3 text-sm">
+                                    <MapPin size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-700">
+                                        {[profile.zonal_committee, profile.regional_committee].filter(Boolean).join(' · ')}
+                                    </span>
+                                </div>
+                            )}
+                            {profile.gotram && (
+                                <div className="flex items-center gap-3 text-sm">
+                                    <Star size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-700">Gotram: {profile.gotram}</span>
+                                </div>
+                            )}
+                            {profile.occupation && (
+                                <div className="flex items-center gap-3 text-sm">
+                                    <Briefcase size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-700">{profile.occupation}</span>
+                                </div>
+                            )}
+                            {profile.joined_at && (
+                                <div className="flex items-center gap-3 text-sm">
+                                    <Calendar size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-gray-700">Member since {formatDate(profile.joined_at)}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
+            </div>
+        </div>
+    );
+};
+
 const Members = () => {
+    const { user } = useAuth();
+    const isActiveMember = user?.status === 'ACTIVE';
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [filterRole, setFilterRole] = useState('ALL');
+    const [selectedMemberId, setSelectedMemberId] = useState(null);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     useEffect(() => {
         api.get('/members/active')
@@ -70,6 +216,14 @@ const Members = () => {
             .catch(() => setMembers([]))
             .finally(() => setLoading(false));
     }, []);
+
+    const handleMemberClick = (member) => {
+        if (isActiveMember) {
+            setSelectedMemberId(member.id);
+        } else {
+            setShowLoginPrompt(true);
+        }
+    };
 
     const roles = ['ALL', 'PERMANENT', 'NORMAL'];
 
@@ -123,6 +277,14 @@ const Members = () => {
                     </div>
                 </div>
 
+                {/* Non-member notice */}
+                {!isActiveMember && (
+                    <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-sm text-amber-700">
+                        <Lock size={14} className="shrink-0" />
+                        <span>Login as an active member to view full contact details and member profiles.</span>
+                    </div>
+                )}
+
                 {/* Grid */}
                 {loading ? (
                     <div className="flex justify-center py-20">
@@ -136,11 +298,27 @@ const Members = () => {
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {filtered.map(member => (
-                            <MemberTile key={member.id} member={member} />
+                            <MemberTile
+                                key={member.id}
+                                member={member}
+                                onClick={handleMemberClick}
+                                isActiveMember={isActiveMember}
+                            />
                         ))}
                     </div>
                 )}
             </div>
+
+            {selectedMemberId && (
+                <MemberProfileModal
+                    memberId={selectedMemberId}
+                    onClose={() => setSelectedMemberId(null)}
+                />
+            )}
+
+            {showLoginPrompt && (
+                <LoginPromptModal onClose={() => setShowLoginPrompt(false)} />
+            )}
         </div>
     );
 };

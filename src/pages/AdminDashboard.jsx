@@ -2,34 +2,31 @@ import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { Button, Input } from '../components/ui';
 import { toast } from 'react-hot-toast';
-import { CheckCircle, XCircle, Loader2, ShieldCheck, Plus, UserPlus } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ShieldCheck, Plus, UserPlus, Newspaper, ExternalLink, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../features/auth/AuthContext';
 
-const AdminDashboard = () => {
-    const navigate = useNavigate();
+// ─── Membership Requests Tab ──────────────────────────────────────────────────
+
+const MembershipTab = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newMember, setNewMember] = useState({
-        phone: '',
-        full_name: '',
-        role: 'NORMAL',
-        zonal_committee: '',
-        regional_committee: ''
+        phone: '', full_name: '', role: 'NORMAL', zonal_committee: '', regional_committee: ''
     });
 
-    useEffect(() => {
-        fetchRequests();
-    }, []);
+    useEffect(() => { fetchRequests(); }, []);
 
     const fetchRequests = async () => {
         try {
             const response = await api.get('/admin/pending-requests');
             setRequests(response.data);
-        } catch (error) {
+        } catch {
             toast.error('Failed to fetch requests');
         } finally {
             setLoading(false);
@@ -40,23 +37,14 @@ const AdminDashboard = () => {
         setActionLoading(userId);
         try {
             const response = await api.post('/admin/approve-request', {
-                user_id: userId,
-                action: action,
-                admin_notes: 'Approved via dashboard'
+                user_id: userId, action, admin_notes: 'Approved via dashboard'
             });
             toast.success(response.data.message);
-            if (selectedRequest?.user_id === userId) {
-                setSelectedRequest(null);
-            }
+            if (selectedRequest?.user_id === userId) setSelectedRequest(null);
             fetchRequests();
         } catch (error) {
             const detail = error.response?.data?.detail;
-            const message = Array.isArray(detail)
-                ? detail.map(d => d.msg).join(', ')
-                : typeof detail === 'string'
-                    ? detail
-                    : `Failed to ${action.toLowerCase()} request`;
-            toast.error(message);
+            toast.error(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || `Failed to ${action.toLowerCase()} request`));
         } finally {
             setActionLoading(null);
         }
@@ -70,132 +58,83 @@ const AdminDashboard = () => {
             toast.success(response.data.message);
             setShowAddModal(false);
             setNewMember({ phone: '', full_name: '', role: 'NORMAL', zonal_committee: '', regional_committee: '' });
-            fetchRequests(); // Refresh list if needed (though it's for pending)
         } catch (error) {
             const detail = error.response?.data?.detail;
-            const message = Array.isArray(detail)
-                ? detail.map(d => d.msg).join(', ')
-                : typeof detail === 'string'
-                    ? detail
-                    : 'Failed to add member';
-            toast.error(message);
+            toast.error(Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Failed to add member'));
         } finally {
             setActionLoading(null);
         }
     };
 
-    if (loading) return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="animate-spin text-[var(--color-primary)] h-10 w-10" />
-        </div>
-    );
+    if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[var(--color-primary)] h-8 w-8" /></div>;
 
     return (
-        <div className="bg-gray-50 min-h-screen py-8 px-4">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+        <>
+            <div className="flex items-center justify-between mb-6">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                    <ShieldCheck className="text-green-600 h-5 w-5" />
                     <div>
-                        <h1 className="text-3xl font-black text-gray-900">Admin Dashboard</h1>
-                        <p className="text-gray-500">Manage membership applications and approvals</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Button
-                            onClick={() => navigate('/admin/onboard')}
-                            className="bg-gray-900 hover:bg-black text-white px-6 rounded-2xl h-14 shadow-lg shadow-gray-200"
-                        >
-                            <UserPlus size={18} className="mr-2" />
-                            Onboard Members
-                        </Button>
-                        <Button
-                            onClick={() => setShowAddModal(true)}
-                            className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-6 rounded-2xl h-14 shadow-sm"
-                        >
-                            <Plus size={18} className="mr-2" />
-                            Quick Add
-                        </Button>
-                        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
-                            <ShieldCheck className="text-green-600 h-6 w-6" />
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Requests</p>
-                                <p className="text-xl font-black text-gray-900">{requests.length}</p>
-                            </div>
-                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending</p>
+                        <p className="text-xl font-black text-gray-900">{requests.length}</p>
                     </div>
                 </div>
+                <Button onClick={() => setShowAddModal(true)} className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-5 rounded-2xl h-11 shadow-sm">
+                    <Plus size={16} className="mr-2" /> Quick Add
+                </Button>
+            </div>
 
-                <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Member</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Details</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+            <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Member</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Details</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {requests.length === 0 ? (
+                                <tr><td colSpan="4" className="px-6 py-12 text-center text-gray-400">No pending membership requests.</td></tr>
+                            ) : requests.map((req) => (
+                                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-[var(--color-primary-light)]/20 flex items-center justify-center text-[var(--color-primary)] font-bold">
+                                                {req.users.identifier[0].toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{req.users.identifier}</p>
+                                                <p className="text-xs text-gray-500">{req.users.phone || 'No phone'}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wider">{req.requested_role}</span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-xs space-y-1">
+                                            <p><span className="text-gray-400 font-medium">Applied:</span> {new Date(req.created_at).toLocaleDateString()}</p>
+                                            <p className="mt-2 text-[var(--color-primary)] font-bold cursor-pointer hover:underline" onClick={() => setSelectedRequest(req)}>
+                                                View Full Application →
+                                            </p>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button size="sm" variant="outline" className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => handleAction(req.user_id, 'REJECT')} disabled={actionLoading === req.user_id}>
+                                                <XCircle size={18} />
+                                            </Button>
+                                            <Button size="sm" className="h-9 px-4 rounded-lg bg-green-600 hover:bg-green-700 border-none flex items-center gap-2" onClick={() => handleAction(req.user_id, 'APPROVE')} isLoading={actionLoading === req.user_id}>
+                                                <CheckCircle size={18} /> Approve
+                                            </Button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {requests.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="4" className="px-6 py-12 text-center text-gray-400">
-                                            No pending membership requests found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    requests.map((req) => (
-                                        <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-[var(--color-primary-light)]/20 flex items-center justify-center text-[var(--color-primary)] font-bold">
-                                                        {req.users.identifier[0].toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-gray-900">{req.users.identifier}</p>
-                                                        <p className="text-xs text-gray-500">{req.users.phone || 'No phone'}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                                    {req.requested_role}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-xs space-y-1">
-                                                    <p><span className="text-gray-400 font-medium">Applied:</span> {new Date(req.created_at).toLocaleDateString()}</p>
-                                                    <p className="mt-2 text-[var(--color-primary)] font-bold cursor-pointer hover:underline" onClick={() => setSelectedRequest(req)}>
-                                                        View Full Application →
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                                                        onClick={() => handleAction(req.user_id, 'REJECT')}
-                                                        disabled={actionLoading === req.user_id}
-                                                    >
-                                                        <XCircle size={18} />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        className="h-9 px-4 rounded-lg bg-green-600 hover:bg-green-700 border-none flex items-center gap-2"
-                                                        onClick={() => handleAction(req.user_id, 'APPROVE')}
-                                                        isLoading={actionLoading === req.user_id}
-                                                    >
-                                                        <CheckCircle size={18} />
-                                                        Approve
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -203,12 +142,8 @@ const AdminDashboard = () => {
             <AnimatePresence>
                 {selectedRequest && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-100"
-                        >
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-gray-100">
                             <div className="p-8 overflow-y-auto max-h-[90vh]">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
@@ -219,9 +154,7 @@ const AdminDashboard = () => {
                                         <XCircle className="text-gray-400" />
                                     </button>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Personal Info */}
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)]">Personal Information</h3>
                                         <div className="space-y-2">
@@ -231,8 +164,6 @@ const AdminDashboard = () => {
                                             <DetailItem label="DOB" value={selectedRequest.application_data.dob} />
                                         </div>
                                     </div>
-
-                                    {/* Contact & Professional */}
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)]">Contact & Status</h3>
                                         <div className="space-y-2">
@@ -243,36 +174,20 @@ const AdminDashboard = () => {
                                             <DetailItem label="Region" value={selectedRequest.application_data.regional_committee} />
                                         </div>
                                     </div>
-
                                     <div className="md:col-span-2 space-y-4 pt-4 border-t border-gray-50">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-green-600">Verification</h3>
                                         <div className="bg-green-50 p-4 rounded-2xl border border-green-100">
                                             <DetailItem label="Payment Proof (UTR/Link)" value={selectedRequest.application_data.payment_proof_url} color="text-green-700 font-bold" />
                                         </div>
                                     </div>
-
                                     <div className="md:col-span-2 space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Address</label>
                                         <p className="text-sm font-medium text-gray-900 bg-gray-50 p-4 rounded-2xl border border-gray-100">{selectedRequest.application_data.address || 'N/A'}</p>
                                     </div>
                                 </div>
-
                                 <div className="flex gap-3 mt-10">
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1 rounded-2xl h-14 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200"
-                                        onClick={() => handleAction(selectedRequest.user_id, 'REJECT')}
-                                        disabled={actionLoading}
-                                    >
-                                        Reject Application
-                                    </Button>
-                                    <Button
-                                        className="flex-1 rounded-2xl h-14 bg-green-600 hover:bg-green-700 shadow-xl shadow-green-200"
-                                        onClick={() => handleAction(selectedRequest.user_id, 'APPROVE')}
-                                        isLoading={actionLoading === selectedRequest.user_id}
-                                    >
-                                        Approve & Activate
-                                    </Button>
+                                    <Button variant="outline" className="flex-1 rounded-2xl h-14 border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200" onClick={() => handleAction(selectedRequest.user_id, 'REJECT')} disabled={actionLoading}>Reject Application</Button>
+                                    <Button className="flex-1 rounded-2xl h-14 bg-green-600 hover:bg-green-700 shadow-xl shadow-green-200" onClick={() => handleAction(selectedRequest.user_id, 'APPROVE')} isLoading={actionLoading === selectedRequest.user_id}>Approve & Activate</Button>
                                 </div>
                             </div>
                         </motion.div>
@@ -280,45 +195,25 @@ const AdminDashboard = () => {
                 )}
             </AnimatePresence>
 
-            {/* Add Member Modal */}
+            {/* Quick Add Modal */}
             <AnimatePresence>
                 {showAddModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl"
-                        >
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl">
                             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-900 rounded-xl text-white">
-                                        <UserPlus size={20} />
-                                    </div>
+                                    <div className="p-2 bg-gray-900 rounded-xl text-white"><UserPlus size={20} /></div>
                                     <h2 className="text-xl font-black text-gray-900">Add New Member</h2>
                                 </div>
-                                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
-                                    <XCircle size={24} />
-                                </button>
+                                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><XCircle size={24} /></button>
                             </div>
-
                             <form onSubmit={handleAddMember} className="p-8 space-y-4">
                                 <Input label="Full Name" required value={newMember.full_name} onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })} />
                                 <Input label="Phone Number" required value={newMember.phone} onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })} placeholder="e.g. 9876543210" />
-
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Membership Type</label>
-                                        <select
-                                            className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
-                                            value={newMember.role}
-                                            onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                                        >
+                                        <select className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none" value={newMember.role} onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}>
                                             <option value="PERMANENT">Permanent</option>
                                             <option value="NORMAL">Normal</option>
                                             <option value="ASSOCIATED">Associated</option>
@@ -326,38 +221,20 @@ const AdminDashboard = () => {
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Zone</label>
-                                        <select
-                                            className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
-                                            value={newMember.zonal_committee}
-                                            onChange={(e) => setNewMember({ ...newMember, zonal_committee: e.target.value })}
-                                        >
+                                        <select className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none" value={newMember.zonal_committee} onChange={(e) => setNewMember({ ...newMember, zonal_committee: e.target.value })}>
                                             <option value="">Select Zone</option>
-                                            {['Uttar Andhra', 'Rayalaseema', 'Dakshina Kosta Andhra', 'Madhya Kosta'].map(opt => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
+                                            {['Uttar Andhra', 'Rayalaseema', 'Dakshina Kosta Andhra', 'Madhya Kosta'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                         </select>
                                     </div>
                                 </div>
-
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Region</label>
-                                    <select
-                                        className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none"
-                                        value={newMember.regional_committee}
-                                        onChange={(e) => setNewMember({ ...newMember, regional_committee: e.target.value })}
-                                    >
+                                    <select className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus-visible:outline-none focus:border-[var(--color-primary)] outline-none" value={newMember.regional_committee} onChange={(e) => setNewMember({ ...newMember, regional_committee: e.target.value })}>
                                         <option value="">Select Region</option>
-                                        {['Andhra', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
+                                        {['Andhra', 'Telangana', 'Tamil Nadu', 'Karnataka', 'Rest of India'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                     </select>
                                 </div>
-
-                                <Button
-                                    type="submit"
-                                    disabled={actionLoading === 'adding'}
-                                    className="w-full h-14 bg-gray-900 hover:bg-black text-white rounded-2xl mt-4 shadow-xl shadow-gray-200"
-                                >
+                                <Button type="submit" disabled={actionLoading === 'adding'} className="w-full h-14 bg-gray-900 hover:bg-black text-white rounded-2xl mt-4 shadow-xl shadow-gray-200">
                                     {actionLoading === 'adding' ? <Loader2 className="animate-spin" /> : 'Create Active Membership'}
                                 </Button>
                                 <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest">Default PIN: 1234</p>
@@ -366,6 +243,274 @@ const AdminDashboard = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+        </>
+    );
+};
+
+// ─── Articles Tab ─────────────────────────────────────────────────────────────
+
+const ArticlesTab = () => {
+    const { user } = useAuth();
+    const [pending, setPending] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(null);
+    const [showPublishModal, setShowPublishModal] = useState(false);
+    const [rejectModal, setRejectModal] = useState(null); // article being rejected
+    const [rejectNote, setRejectNote] = useState('');
+    const [publishForm, setPublishForm] = useState({ title: '', summary: '', category: 'NEWS' });
+    const [pdfFile, setPdfFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+
+    useEffect(() => { fetchPending(); }, []);
+
+    const fetchPending = async () => {
+        try {
+            const res = await api.get('/articles/pending');
+            setPending(res.data);
+        } catch {
+            toast.error('Failed to fetch pending articles');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePdfSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') { toast.error('Only PDF files are allowed'); return; }
+        if (file.size > 10 * 1024 * 1024) { toast.error('File too large (max 10 MB)'); return; }
+        setPdfFile(file);
+    };
+
+    const uploadPdf = async (file, userId) => {
+        const path = `submissions/${userId}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+        const { error } = await supabase.storage.from('articles').upload(path, file, { contentType: 'application/pdf' });
+        if (error) throw new Error(error.message);
+        const { data } = supabase.storage.from('articles').getPublicUrl(path);
+        return { pdf_url: data.publicUrl, pdf_path: path };
+    };
+
+    const handlePublish = async (e) => {
+        e.preventDefault();
+        if (!pdfFile) { toast.error('Please select a PDF'); return; }
+        setUploading(true);
+        try {
+            const { pdf_url, pdf_path } = await uploadPdf(pdfFile, user.id);
+            await api.post('/articles/publish', { ...publishForm, pdf_url, pdf_path });
+            toast.success('Article published!');
+            setShowPublishModal(false);
+            setPublishForm({ title: '', summary: '', category: 'NEWS' });
+            setPdfFile(null);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to publish');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleApprove = async (articleId) => {
+        setActionLoading(articleId);
+        try {
+            await api.post(`/articles/${articleId}/review`, { action: 'APPROVE' });
+            toast.success('Article approved and published!');
+            fetchPending();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to approve');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleReject = async () => {
+        if (!rejectModal) return;
+        setActionLoading(rejectModal.id);
+        try {
+            await api.post(`/articles/${rejectModal.id}/review`, { action: 'REJECT', admin_notes: rejectNote });
+            toast.success('Article rejected.');
+            setRejectModal(null);
+            setRejectNote('');
+            fetchPending();
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to reject');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[var(--color-primary)] h-8 w-8" /></div>;
+
+    return (
+        <>
+            <div className="flex items-center justify-between mb-6">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                    <Newspaper className="text-amber-500 h-5 w-5" />
+                    <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending Review</p>
+                        <p className="text-xl font-black text-gray-900">{pending.length}</p>
+                    </div>
+                </div>
+                <Button onClick={() => setShowPublishModal(true)} className="bg-gray-900 hover:bg-black text-white px-5 rounded-2xl h-11 shadow-lg">
+                    <Plus size={16} className="mr-2" /> Publish Article
+                </Button>
+            </div>
+
+            <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Article</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Submitted By</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {pending.length === 0 ? (
+                                <tr><td colSpan="4" className="px-6 py-12 text-center text-gray-400">No pending article submissions.</td></tr>
+                            ) : pending.map((article) => (
+                                <tr key={article.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div>
+                                            <p className="font-bold text-gray-900 text-sm">{article.title}</p>
+                                            {article.summary && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{article.summary}</p>}
+                                            <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${article.category === 'NEWS' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                                {article.category}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                        {article.users?.full_name || '—'}
+                                        {article.users?.member_id && <span className="block text-xs text-gray-400 font-mono">{article.users.member_id}</span>}
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-gray-500">
+                                        {new Date(article.created_at).toLocaleDateString()}
+                                        <a href={article.pdf_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[var(--color-primary)] font-bold hover:underline flex items-center gap-1">
+                                            View PDF <ExternalLink size={11} />
+                                        </a>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button size="sm" variant="outline" className="h-9 w-9 p-0 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => { setRejectModal(article); setRejectNote(''); }} disabled={actionLoading === article.id}>
+                                                <XCircle size={18} />
+                                            </Button>
+                                            <Button size="sm" className="h-9 px-4 rounded-lg bg-green-600 hover:bg-green-700 border-none flex items-center gap-2" onClick={() => handleApprove(article.id)} isLoading={actionLoading === article.id}>
+                                                <CheckCircle size={18} /> Approve
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Publish Article Modal */}
+            <AnimatePresence>
+                {showPublishModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl">
+                            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-gray-900 rounded-xl text-white"><Newspaper size={20} /></div>
+                                    <h2 className="text-xl font-black text-gray-900">Publish Article</h2>
+                                </div>
+                                <button onClick={() => setShowPublishModal(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><XCircle size={24} /></button>
+                            </div>
+                            <form onSubmit={handlePublish} className="p-8 space-y-4">
+                                <Input label="Title" required value={publishForm.title} onChange={e => setPublishForm({ ...publishForm, title: e.target.value })} />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Summary (optional)</label>
+                                    <textarea rows={3} value={publishForm.summary} onChange={e => setPublishForm({ ...publishForm, summary: e.target.value })}
+                                        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[var(--color-primary)] resize-none" placeholder="Brief description..." />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Category</label>
+                                    <select value={publishForm.category} onChange={e => setPublishForm({ ...publishForm, category: e.target.value })}
+                                        className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus:outline-none focus:border-[var(--color-primary)] outline-none">
+                                        <option value="NEWS">News</option>
+                                        <option value="ARTICLE">Article</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">PDF File</label>
+                                    <label className={`flex items-center gap-3 border-2 border-dashed rounded-2xl px-4 py-4 cursor-pointer transition-colors ${pdfFile ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-[var(--color-primary)]'}`}>
+                                        <UploadCloud size={20} className={pdfFile ? 'text-green-500' : 'text-gray-400'} />
+                                        <span className={`text-sm font-medium ${pdfFile ? 'text-green-700' : 'text-gray-500'}`}>
+                                            {pdfFile ? pdfFile.name : 'Click to upload PDF (max 10 MB)'}
+                                        </span>
+                                        <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfSelect} />
+                                    </label>
+                                </div>
+                                <Button type="submit" disabled={uploading} className="w-full h-14 bg-gray-900 hover:bg-black text-white rounded-2xl mt-2 shadow-xl shadow-gray-200">
+                                    {uploading ? <><Loader2 className="animate-spin mr-2" /> Uploading...</> : 'Publish Now'}
+                                </Button>
+                                <p className="text-[10px] text-center text-amber-600 font-bold">Article will be auto-deleted after 30 days.</p>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Reject with Note Modal */}
+            <AnimatePresence>
+                {rejectModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-8">
+                            <h3 className="text-lg font-black text-gray-900 mb-1">Reject Article</h3>
+                            <p className="text-xs text-gray-500 mb-4">"{rejectModal.title}"</p>
+                            <textarea rows={3} value={rejectNote} onChange={e => setRejectNote(e.target.value)}
+                                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-red-300 resize-none mb-4"
+                                placeholder="Reason for rejection (optional)..." />
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => setRejectModal(null)}>Cancel</Button>
+                                <Button className="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-700 border-none" onClick={handleReject} isLoading={actionLoading === rejectModal.id}>Reject</Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </>
+    );
+};
+
+// ─── Main AdminDashboard ──────────────────────────────────────────────────────
+
+const AdminDashboard = () => {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('membership');
+
+    const tabs = [
+        { id: 'membership', label: 'Membership Requests' },
+        { id: 'articles', label: 'News & Articles' },
+    ];
+
+    return (
+        <div className="bg-gray-50 min-h-screen py-8 px-4">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900">Admin Dashboard</h1>
+                        <p className="text-gray-500">Manage members and content</p>
+                    </div>
+                    <Button onClick={() => navigate('/admin/onboard')} className="bg-gray-900 hover:bg-black text-white px-6 rounded-2xl h-14 shadow-lg shadow-gray-200">
+                        <UserPlus size={18} className="mr-2" /> Onboard Members
+                    </Button>
+                </div>
+
+                {/* Tab Navigation */}
+                <div className="flex gap-1 bg-white rounded-2xl p-1 border border-gray-100 shadow-sm mb-8 w-fit">
+                    {tabs.map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'}`}>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {activeTab === 'membership' ? <MembershipTab /> : <ArticlesTab />}
+            </div>
         </div>
     );
 };
@@ -378,4 +523,3 @@ const DetailItem = ({ label, value, color = "text-gray-900" }) => (
 );
 
 export default AdminDashboard;
-

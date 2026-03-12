@@ -51,14 +51,74 @@ npm run dev
 
 ---
 
+## 🗄️ Supabase Setup
+
+### Storage Buckets
+| Bucket | Purpose | Visibility |
+|--------|---------|------------|
+| `membership` | Member profile photos | Public |
+| `articles` | Article/News PDFs | Public |
+
+### Articles Table (run once in Supabase SQL Editor)
+```sql
+CREATE TABLE articles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT,
+    pdf_url TEXT NOT NULL,
+    pdf_path TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'ARTICLE' CHECK (category IN ('NEWS', 'ARTICLE')),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PUBLISHED', 'PENDING', 'REJECTED')),
+    submitted_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    admin_notes TEXT,
+    published_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_articles_status ON articles(status);
+CREATE INDEX idx_articles_expires_at ON articles(expires_at);
+```
+
+### Auto-delete expired articles via pg_cron
+Enable `pg_cron` in Supabase Dashboard → Database → Extensions, then run:
+```sql
+SELECT cron.schedule(
+    'delete-expired-articles',
+    '0 2 * * *',
+    $$DELETE FROM articles WHERE expires_at < NOW()$$
+);
+```
+> pg_cron removes DB records only. Storage files are cleaned up by `DELETE /articles/{id}` and `POST /articles/cleanup`.
+
+---
+
 ## ⏭️ Development Roadmap
 *   **Phase 5**: Matrimony Hub & Member Directory.
 *   **Phase 6**: Integrated Razorpay Payments.
 *   **Phase 7**: Digital ID Card Generation.
 
+### 🔮 Infrastructure — Storage Migration: Supabase → Cloudflare R2
+**When to do this:** When Supabase Storage free tier (1 GB shared across photos + PDFs) approaches capacity.
 
-To view the swagger docs : 
+**Why R2:**
+- 10 GB free storage (10× Supabase free tier)
+- 1M write / 10M read ops free per month
+- Zero egress fees (unlike AWS S3)
+- S3-compatible API — minimal code change
 
-"    http://localhost:8000/api/docs   "
+**Migration steps when ready:**
+1. Cloudflare account → R2 → create `articles` bucket
+2. Add to `.env`: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`
+3. `pip install boto3`
+4. Replace Supabase storage calls in `backend/app/articles/routes.py` with boto3 S3 calls
+5. Migrate existing PDFs: download from Supabase → upload to R2 → update `pdf_url` in DB
+6. Update frontend upload flow: replace Supabase JS client direct upload with backend presigned-URL endpoint
 
+**Files to change:** `backend/app/articles/routes.py`, article submit/publish forms in frontend.
 
+---
+
+To view the swagger docs: `http://localhost:8000/api/docs`

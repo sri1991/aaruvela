@@ -10,6 +10,7 @@ import OnboardMembers from './pages/OnboardMembers.jsx';
 import MemberDashboard from './pages/MemberDashboard.jsx';
 import Donations from './pages/Donations.jsx';
 import Members from './pages/Members.jsx';
+import News from './pages/News.jsx';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -53,6 +54,7 @@ function App() {
               <Route path="/administration" element={<Administration />} />
               <Route path="/donations" element={<Donations />} />
               <Route path="/members" element={<Members />} />
+              <Route path="/news" element={<News />} />
 
               <Route path="/membership" element={
                 <ProtectedRoute status="PENDING">

@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import MemberCard from '../components/MemberCard';
 import { Button, Input } from '../components/ui';
-import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info } from 'lucide-react';
+import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info, Newspaper, FileText } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -10,9 +11,14 @@ import api from '../lib/api';
 
 const MemberDashboard = () => {
     const { user, signOut, refreshUser } = useAuth();
+    const navigate = useNavigate();
     const cardRef = useRef(null);
     const [isEditing, setIsEditing] = React.useState(false);
     const [isChangingPin, setIsChangingPin] = React.useState(false);
+    const [isSubmittingArticle, setIsSubmittingArticle] = React.useState(false);
+    const [articleForm, setArticleForm] = React.useState({ title: '', summary: '', category: 'ARTICLE' });
+    const [articlePdfFile, setArticlePdfFile] = React.useState(null);
+    const [articleUploading, setArticleUploading] = React.useState(false);
     const [pinForm, setPinForm] = React.useState({ newPin: '', confirmPin: '' });
     const [uploading, setUploading] = React.useState(false);
     const [editForm, setEditForm] = React.useState({
@@ -151,6 +157,35 @@ const MemberDashboard = () => {
         }
     };
 
+    const handleArticlePdfSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') { toast.error('Only PDF files are allowed'); return; }
+        if (file.size > 10 * 1024 * 1024) { toast.error('File too large (max 10 MB)'); return; }
+        setArticlePdfFile(file);
+    };
+
+    const handleArticleSubmit = async (e) => {
+        e.preventDefault();
+        if (!articlePdfFile) { toast.error('Please select a PDF'); return; }
+        setArticleUploading(true);
+        try {
+            const path = `submissions/${user.id}/${Date.now()}_${articlePdfFile.name.replace(/\s+/g, '_')}`;
+            const { error } = await supabase.storage.from('articles').upload(path, articlePdfFile, { contentType: 'application/pdf' });
+            if (error) throw error;
+            const { data } = supabase.storage.from('articles').getPublicUrl(path);
+            await api.post('/articles/submit', { ...articleForm, pdf_url: data.publicUrl, pdf_path: path });
+            toast.success('Article submitted for review!');
+            setIsSubmittingArticle(false);
+            setArticleForm({ title: '', summary: '', category: 'ARTICLE' });
+            setArticlePdfFile(null);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || err.message || 'Submission failed');
+        } finally {
+            setArticleUploading(false);
+        }
+    };
+
     if (!user) return null;
 
     return (
@@ -257,6 +292,34 @@ const MemberDashboard = () => {
                                 status="Coming Soon"
                                 color="blue"
                             />
+                            {/* News & Articles — Active */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden md:col-span-2">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-start gap-5">
+                                        <div className="p-4 rounded-3xl bg-amber-50 shrink-0 group-hover:scale-110 transition-transform">
+                                            <Newspaper size={24} className="text-amber-500" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-black text-gray-900 mb-1">News & Articles</h4>
+                                            <p className="text-xs text-gray-500 leading-relaxed font-medium">Read the latest community news and publications. Submit your own article for review.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 shrink-0">
+                                        <button
+                                            onClick={() => setIsSubmittingArticle(true)}
+                                            className="flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-xl transition-colors border border-amber-200"
+                                        >
+                                            <FileText size={13} /> Submit Article
+                                        </button>
+                                        <button
+                                            onClick={() => navigate('/news')}
+                                            className="flex items-center gap-1.5 text-xs font-bold text-white bg-gray-900 hover:bg-gray-700 px-4 py-2 rounded-xl transition-colors"
+                                        >
+                                            Read Now <ChevronRight size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-amber-200">
@@ -274,6 +337,57 @@ const MemberDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Submit Article Modal */}
+            {isSubmittingArticle && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        <div className="flex bg-gray-50 border-b border-gray-100 items-center justify-between p-6 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-gray-900 rounded-xl text-white"><Newspaper size={18} /></div>
+                                <h2 className="text-xl font-black text-gray-900">Submit Article</h2>
+                            </div>
+                            <button onClick={() => { setIsSubmittingArticle(false); setArticlePdfFile(null); }} className="text-gray-400 hover:text-gray-900 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleArticleSubmit} className="p-6 space-y-4 overflow-y-auto">
+                            <p className="text-xs text-gray-500">Your submission will be reviewed by the admin before publishing.</p>
+                            <Input label="Title" required value={articleForm.title} onChange={e => setArticleForm({ ...articleForm, title: e.target.value })} />
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Summary (optional)</label>
+                                <textarea rows={3} value={articleForm.summary} onChange={e => setArticleForm({ ...articleForm, summary: e.target.value })}
+                                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[var(--color-primary)] resize-none"
+                                    placeholder="Brief description of your article..." />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Category</label>
+                                <select value={articleForm.category} onChange={e => setArticleForm({ ...articleForm, category: e.target.value })}
+                                    className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus:outline-none focus:border-[var(--color-primary)] outline-none">
+                                    <option value="ARTICLE">Article</option>
+                                    <option value="NEWS">News</option>
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">PDF File</label>
+                                <label className={`flex items-center gap-3 border-2 border-dashed rounded-2xl px-4 py-4 cursor-pointer transition-colors ${articlePdfFile ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-[var(--color-primary)]'}`}>
+                                    <UploadCloud size={20} className={articlePdfFile ? 'text-green-500' : 'text-gray-400'} />
+                                    <span className={`text-sm font-medium ${articlePdfFile ? 'text-green-700' : 'text-gray-500'}`}>
+                                        {articlePdfFile ? articlePdfFile.name : 'Click to upload PDF (max 10 MB)'}
+                                    </span>
+                                    <input type="file" accept="application/pdf" className="hidden" onChange={handleArticlePdfSelect} />
+                                </label>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-bold text-gray-600" onClick={() => { setIsSubmittingArticle(false); setArticlePdfFile(null); }}>Cancel</Button>
+                                <Button type="submit" disabled={articleUploading} className="flex-1 h-12 rounded-xl font-black">
+                                    {articleUploading ? <><Loader2 className="animate-spin mr-2" size={16} />Uploading...</> : 'Submit for Review'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Change PIN Modal */}
             {isChangingPin && (
