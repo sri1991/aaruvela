@@ -23,19 +23,23 @@ def _now_utc() -> str:
 async def _generate_member_id(supabase, role: str) -> str:
     """
     Generate a human-readable member ID (e.g. PID-003).
-    Uses MAX(member_id) scoped to the prefix to avoid race conditions
-    caused by counting rows. Still best-effort — the member_id column
-    should have a UNIQUE constraint in the DB to catch collisions.
+    Derives the next number from the highest existing member_id with
+    the same prefix, so gaps or out-of-order inserts never cause duplicates.
     """
     prefix = ROLE_PREFIXES.get(role, "GEN")
-    count_result = await run_query(
+    result = await run_query(
         lambda: supabase.table("users")
-        .select("id", count="exact")
-        .eq("role", role)
+        .select("member_id")
+        .like("member_id", f"{prefix}-%")
         .execute()
     )
-    next_num = (count_result.count or 0) + 1
-    return f"{prefix}-{next_num:03d}"
+    max_num = 0
+    for row in (result.data or []):
+        mid = row.get("member_id", "")
+        parts = mid.split("-")
+        if len(parts) == 2 and parts[1].isdigit():
+            max_num = max(max_num, int(parts[1]))
+    return f"{prefix}-{max_num + 1:03d}"
 
 
 @router.get("/pending-requests")
@@ -149,7 +153,7 @@ async def create_manual_member(
             "phone": clean_phone,
             "pin_hash": hashed_pin,
             "role": "GENERAL",
-            "status": "INACTIVE",
+            "status": "PENDING",
         }
         user_insert = await run_query(
             lambda: supabase.table("users").insert(new_user).execute()
