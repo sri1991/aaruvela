@@ -82,6 +82,24 @@ CREATE INDEX idx_articles_status ON articles(status);
 CREATE INDEX idx_articles_expires_at ON articles(expires_at);
 ```
 
+### Transactions Table (run once in Supabase SQL Editor)
+```sql
+CREATE TABLE transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    type TEXT NOT NULL CHECK (type IN ('INCOME', 'EXPENSE')),
+    category TEXT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+    description TEXT,
+    reference_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    recorded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_transactions_type ON transactions(type);
+CREATE INDEX idx_transactions_date ON transactions(transaction_date DESC);
+```
+
 ### Auto-delete expired articles via pg_cron
 Enable `pg_cron` in Supabase Dashboard → Database → Extensions, then run:
 ```sql

@@ -1,10 +1,35 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import require_admin
 from app.db import get_supabase_client, run_query
 from app.admin.models import MemberApprovalRequest, ManualMemberCreate
 from app.auth.utils import hash_pin, generate_random_password
+
+# Membership registration fee by role (₹)
+MEMBERSHIP_FEES = {
+    "PERMANENT": 5000,
+    "NORMAL":    100,
+    "ASSOCIATED": 500,
+}
+
+
+async def _record_membership_fee(supabase, role: str, user_id: str, admin_id: str, member_id: str):
+    """Insert an INCOME transaction for the registration fee on membership approval."""
+    fee = MEMBERSHIP_FEES.get(role)
+    if not fee:
+        return
+    await run_query(
+        lambda: supabase.table("transactions").insert({
+            "type":               "INCOME",
+            "category":           "MEMBERSHIP_FEE",
+            "amount":             fee,
+            "description":        f"Registration fee — {member_id} ({role})",
+            "reference_user_id":  user_id,
+            "recorded_by":        admin_id,
+            "transaction_date":   date.today().isoformat(),
+        }).execute()
+    )
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -119,6 +144,9 @@ async def approve_request(
         .execute()
     )
 
+    # Auto-record registration fee in accounts
+    await _record_membership_fee(supabase, final_role, request.user_id, admin["id"], new_member_id)
+
     logger.info("Admin %s approved user %s — role=%s member_id=%s", admin["id"], request.user_id, final_role, new_member_id)
     return {"message": "User approved successfully", "member_id": new_member_id, "role": final_role}
 
@@ -193,6 +221,9 @@ async def create_manual_member(
         "admin_notes": f"Manually added by admin {admin['id']}",
     }
     await run_query(lambda: supabase.table("membership_requests").insert(record).execute())
+
+    # Auto-record registration fee in accounts
+    await _record_membership_fee(supabase, request.role, user_id, admin["id"], new_member_id)
 
     logger.info("Admin %s manually created member %s (%s)", admin["id"], new_member_id, user_id)
     return {"message": "Member created successfully", "member_id": new_member_id, "user_id": user_id}
