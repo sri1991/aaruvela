@@ -569,9 +569,20 @@ const AccountsTab = () => {
             {/* Table header */}
             <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold text-gray-500">{transactions.length} transaction{transactions.length !== 1 ? 's' : ''}</p>
-                <Button onClick={() => setShowModal(true)} className="bg-gray-900 hover:bg-black text-white px-5 rounded-2xl h-10 text-xs shadow-lg">
-                    <Plus size={15} className="mr-1.5" /> Add Transaction
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={async () => {
+                        try {
+                            const res = await api.post('/accounts/backfill');
+                            toast.success(res.data.message);
+                            fetchAll();
+                        } catch { toast.error('Backfill failed'); }
+                    }} className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 rounded-2xl h-10 text-xs shadow-sm">
+                        Backfill Existing Members
+                    </Button>
+                    <Button onClick={() => setShowModal(true)} className="bg-gray-900 hover:bg-black text-white px-5 rounded-2xl h-10 text-xs shadow-lg">
+                        <Plus size={15} className="mr-1.5" /> Add Transaction
+                    </Button>
+                </div>
             </div>
 
             {/* Ledger table */}
@@ -602,8 +613,8 @@ const AccountsTab = () => {
                                     <td className="px-6 py-4 text-xs text-gray-600 font-medium">{tx.category.replace(/_/g, ' ')}</td>
                                     <td className="px-6 py-4 text-sm">
                                         <p className="text-gray-700">{tx.description || '—'}</p>
-                                        {tx.users?.full_name && (
-                                            <p className="text-xs text-gray-400 mt-0.5">{tx.users.full_name} · {tx.users.member_id}</p>
+                                        {tx.member?.full_name && (
+                                            <p className="text-xs text-gray-400 mt-0.5">{tx.member.full_name} · {tx.member.member_id}</p>
                                         )}
                                     </td>
                                     <td className={`px-6 py-4 text-right font-black text-sm ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-500'}`}>
