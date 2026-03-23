@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import require_admin
 from app.db import get_supabase_client, run_query
 from app.admin.models import MemberApprovalRequest, ManualMemberCreate
-from app.auth.utils import hash_pin, generate_random_password
+from app.auth.utils import hash_pin
 
 # Membership registration fee by role (₹)
 MEMBERSHIP_FEES = {
@@ -171,9 +171,8 @@ async def create_manual_member(
         user_id = user_check.data[0]["id"]
         logger.info("Manual member creation: found existing user %s", user_id)
     else:
-        # Create a new user shell with a hashed random PIN
-        temp_password = generate_random_password()
-        hashed_pin = hash_pin(temp_password)
+        # Create a new user shell with the default PIN (1234)
+        hashed_pin = hash_pin("1234")
         clean_phone = "".join(filter(str.isdigit, request.phone))
 
         new_user = {

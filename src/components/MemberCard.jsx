@@ -1,125 +1,147 @@
-import { ShieldCheck, MapPin, Award, User, QrCode } from 'lucide-react';
-import logoLeft from '../assets/logo-left-main.jpg';
+import { ShieldCheck, Award, User, QrCode } from 'lucide-react';
 import digitsign from '../assets/digitsign.jpeg';
+import headerBanner from '../assets/header-banner-main.png';
 
 const MemberCard = ({ user }) => {
     if (!user) return null;
 
-    // Scale name font size based on length to prevent overflow
     const nameLen = user.full_name?.length || 0;
-    const nameFontClass = nameLen > 30 ? 'text-[13px]' : nameLen > 20 ? 'text-[15px]' : 'text-[17px]';
+    const nameFontClass = nameLen > 30 ? 'text-[13px]' : nameLen > 20 ? 'text-[15px]' : 'text-[18px]';
+
+    const brandGreen = '#1a5c4a';
 
     return (
         <div className="relative w-[480px] mx-auto">
             {/* Main Card Body */}
-            <div className="relative w-full bg-white rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-200 flex flex-col">
-
-                {/* Security Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{
-                        backgroundImage: `radial-gradient(circle at 2px 2px, black 1px, transparent 0)`,
-                        backgroundSize: '12px 12px'
-                    }} />
-
-                {/* Card Header */}
-                <div className="bg-[#0F172A] px-5 py-3 flex items-center border-b-2 border-amber-500/50">
-                    <div className="flex items-center gap-3 flex-1">
-                        <div className="w-11 h-11 bg-white rounded-lg flex items-center justify-center shadow-inner overflow-hidden border border-gray-200 shrink-0">
-                            <img src={logoLeft} alt="Logo" className="w-full h-full object-contain p-0.5" />
-                        </div>
-                        <div>
-                            <h1 className="text-white font-black text-sm tracking-[0.2em] leading-tight">PARISHAT</h1>
-                            <p className="text-amber-500 text-[8px] font-black tracking-[0.25em] uppercase">Official Identity Document</p>
-                        </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-end">
-                        <p className="text-white/40 text-[7px] font-black uppercase tracking-widest">Digital Registry</p>
-                        <p className="text-white text-[9px] font-bold tracking-wider">{user.role} MEMBER</p>
-                    </div>
+            <div
+                className="relative w-full rounded-2xl overflow-hidden flex flex-col"
+                style={{
+                    backgroundColor: '#f5f0e8',
+                    boxShadow: '0 24px_60px rgba(0,0,0,0.18)',
+                    border: `1.5px solid ${brandGreen}40`,
+                }}
+            >
+                {/* Watermark */}
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+                    <img src={digitsign} alt="" className="w-72 object-contain select-none" style={{ opacity: 0.07, mixBlendMode: 'multiply' }} />
                 </div>
 
-                {/* Card Content Area */}
-                <div className="flex p-4 gap-5">
+                {/* Banner */}
+                <div className="w-full overflow-hidden">
+                    <img src={headerBanner} alt="Parishat Banner" className="w-full object-cover" />
+                </div>
 
-                    {/* Left Side: Photo & ID */}
+                {/* Thin gold accent line */}
+                <div className="w-full h-[3px]" style={{ background: 'linear-gradient(90deg, #1a5c4a, #c9a227, #1a5c4a)' }} />
+
+                {/* Card Content */}
+                <div className="flex p-5 gap-5 relative z-10">
+
+                    {/* Left: Photo + Member ID */}
                     <div className="flex flex-col items-center gap-2 shrink-0">
-                        <div className="w-[110px] h-[130px] bg-gray-50 rounded-xl border-2 border-gray-100 shadow-md overflow-hidden flex items-center justify-center">
+                        {/* Photo with green+gold border */}
+                        <div
+                            className="w-[108px] h-[128px] rounded-xl overflow-hidden flex items-center justify-center bg-gray-100"
+                            style={{ border: `2.5px solid ${brandGreen}`, boxShadow: '0 0 0 1.5px #c9a22760, 0 4px 12px rgba(0,0,0,0.12)' }}
+                        >
                             {user.photo_url ? (
                                 <img src={user.photo_url} alt={user.full_name} className="w-full h-full object-cover" />
                             ) : (
                                 <User className="text-gray-300" size={52} />
                             )}
                         </div>
-                        <div className="text-center">
-                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Member ID</span>
-                            <span className="text-[13px] font-black text-[#0F172A] tracking-tight">{user.member_id || 'PENDING'}</span>
+
+                        {/* Member ID badge */}
+                        <div
+                            className="text-center px-3 py-1 rounded-lg w-full"
+                            style={{ backgroundColor: brandGreen }}
+                        >
+                            <span className="text-[6px] font-black text-white/60 uppercase tracking-widest block">Member ID</span>
+                            <span className="text-[13px] font-black text-white tracking-tight">{user.member_id || 'PENDING'}</span>
                         </div>
                     </div>
 
-                    {/* Right Side: Details */}
-                    <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+                    {/* Right: Details */}
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
+
                         {/* Name */}
-                        <div className="border-b border-gray-100 pb-2 mb-2">
-                            <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Full Name</span>
-                            <h2 className={`${nameFontClass} font-black text-[#0F172A] leading-snug`}>
+                        <div className="pb-2 mb-2" style={{ borderBottom: `1px solid ${brandGreen}25` }}>
+                            <span className="text-[7px] font-black uppercase tracking-widest block mb-0.5" style={{ color: brandGreen }}>Full Name</span>
+                            <h2 className={`${nameFontClass} font-black leading-snug text-[#1a1a1a]`}>
                                 {user.full_name?.toUpperCase()}
                             </h2>
                         </div>
 
-                        {/* Zone & Region */}
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-2">
+                        {/* Region & DOB */}
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-3">
                             <div>
-                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Zone</span>
-                                <p className="text-[10px] font-bold text-gray-800 flex items-center gap-1 mt-0.5">
-                                    <MapPin size={9} className="text-amber-500 shrink-0" />
-                                    <span className="truncate">{user.zonal_committee || 'N/A'}</span>
+                                <span className="text-[7px] font-black uppercase tracking-widest block mb-0.5" style={{ color: brandGreen }}>Region</span>
+                                <p className="text-[10px] font-bold text-gray-800 flex items-center gap-1">
+                                    <Award size={9} style={{ color: '#c9a227' }} className="shrink-0" />
+                                    <span className="truncate">{user.regional_committee || 'N/A'}</span>
                                 </p>
                             </div>
                             <div>
-                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block">Region</span>
-                                <p className="text-[10px] font-bold text-gray-800 flex items-center gap-1 mt-0.5">
-                                    <Award size={9} className="text-amber-500 shrink-0" />
-                                    <span className="truncate">{user.regional_committee || 'N/A'}</span>
+                                <span className="text-[7px] font-black uppercase tracking-widest block mb-0.5" style={{ color: brandGreen }}>Date of Birth</span>
+                                <p className="text-[10px] font-bold text-gray-800">
+                                    {user.dob
+                                        ? new Date(user.dob).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                                        : 'N/A'}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Status + Signature + QR */}
-                        <div className="flex items-end justify-between">
+                        {/* Bottom row: Status + Signature + QR */}
+                        <div className="flex items-end justify-between gap-2">
+                            {/* Status pills */}
                             <div>
-                                <span className="text-[7px] font-black text-gray-400 uppercase tracking-widest block mb-1">Authorized Status</span>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[8px] font-black rounded-full border border-green-200 uppercase">Verified</span>
-                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[7px] font-black rounded-full border border-gray-200 uppercase">Active since 2026</span>
+                                <span className="text-[7px] font-black uppercase tracking-widest block mb-1" style={{ color: brandGreen }}>Status</span>
+                                <div className="flex items-center gap-1">
+                                    <span className="px-2 py-0.5 text-[7px] font-black rounded-full uppercase" style={{ backgroundColor: `${brandGreen}15`, color: brandGreen, border: `1px solid ${brandGreen}40` }}>
+                                        ✓ Verified
+                                    </span>
+                                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[7px] font-black rounded-full border border-amber-200 uppercase">
+                                        Active
+                                    </span>
                                 </div>
                             </div>
-                            <div className="flex items-end gap-3">
-                                <div className="text-right">
-                                    <span className="text-[7px] font-black text-gray-400 uppercase tracking-[0.15em] block">President</span>
-                                    <img src={digitsign} alt="Signature" className="h-8 w-auto mt-1 ml-auto opacity-80 object-contain" />
-                                </div>
-                                <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center p-1 opacity-70 shrink-0">
-                                    <QrCode size={34} className="text-gray-400" />
-                                </div>
+
+                            {/* Signature */}
+                            <div className="text-center">
+                                <img
+                                    src={digitsign}
+                                    alt="Signature"
+                                    className="h-9 w-auto mx-auto object-contain"
+                                    style={{ mixBlendMode: 'darken' }}
+                                />
+                                <span className="text-[6px] font-black uppercase tracking-widest block mt-0.5" style={{ color: brandGreen }}>President</span>
+                            </div>
+
+                            {/* QR */}
+                            <div
+                                className="w-12 h-12 rounded-lg flex items-center justify-center p-1 shrink-0"
+                                style={{ backgroundColor: 'white', border: `1px solid ${brandGreen}30` }}
+                            >
+                                <QrCode size={34} style={{ color: brandGreen }} className="opacity-60" />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 px-5 py-1.5 border-t border-gray-100 flex justify-between items-center">
-                    <p className="text-[6px] text-gray-400 font-bold uppercase tracking-[0.08em] truncate pr-4">
-                        This card is an official property of the Parishat Registry. If found, please return to any Zonal Office.
+                <div
+                    className="px-5 py-1.5 flex justify-between items-center"
+                    style={{ backgroundColor: brandGreen }}
+                >
+                    <p className="text-[6px] text-white/50 font-bold uppercase tracking-[0.08em] truncate pr-4">
+                        Official property of Parishat Registry · Return to any Zonal Office if found
                     </p>
                     <div className="flex items-center gap-1 shrink-0">
-                        <ShieldCheck size={9} className="text-amber-500" />
-                        <span className="text-[7px] font-black text-gray-900 uppercase whitespace-nowrap">Secure Document</span>
+                        <ShieldCheck size={9} className="text-amber-300" />
+                        <span className="text-[7px] font-black text-white uppercase whitespace-nowrap">Secure</span>
                     </div>
                 </div>
             </div>
-
-            {/* PVC Chip Effect */}
-            <div className="absolute top-[3.8rem] right-5 w-7 h-5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-sm opacity-20 border border-amber-600/30"></div>
         </div>
     );
 };
