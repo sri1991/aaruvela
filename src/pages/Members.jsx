@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuth } from '../features/auth/AuthContext';
 import { User, MapPin, Award, Loader2, Search, Phone, X, Briefcase, Calendar, Star, LogIn, Lock } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const roleColors = {
     PERMANENT: { badge: 'bg-amber-100 text-amber-700 border-amber-200' },
@@ -100,9 +101,24 @@ const LoginPromptModal = ({ onClose }) => {
 };
 
 const MemberProfileModal = ({ memberId, onClose }) => {
+    const { user } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [resetting, setResetting] = useState(false);
+
+    const handleResetPin = async () => {
+        if (!window.confirm("Are you sure you want to reset this user's PIN to default?")) return;
+        setResetting(true);
+        try {
+            const res = await api.post('/admin/reset-pin', { user_id: memberId });
+            toast.success(res.data.message);
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to reset PIN');
+        } finally {
+            setResetting(false);
+        }
+    };
 
     useEffect(() => {
         api.get(`/members/profile/${memberId}`)
@@ -193,6 +209,20 @@ const MemberProfileModal = ({ memberId, onClose }) => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Admin Actions */}
+                        {user?.role === 'HEAD' && (
+                            <div className="mt-6 pt-5 border-t border-gray-100 flex justify-end">
+                                <button
+                                    onClick={handleResetPin}
+                                    disabled={resetting}
+                                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                                >
+                                    {resetting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
+                                    Reset PIN to Default
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : null}
             </div>

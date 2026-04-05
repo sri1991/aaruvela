@@ -102,7 +102,7 @@ const AuthPage = () => {
                 <div className="relative z-10 overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-6 sm:p-8 shadow-2xl">
                     <div className="mb-6 sm:mb-8 text-center text-left">
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 transition-all">
-                            {mode === 'LOGIN' && 'Welcome Back'}
+                            {mode === 'LOGIN' && 'Welcome'}
                             {mode === 'REGISTER' && 'Join Community'}
                         </h1>
                         <p className="mt-2 text-sm text-gray-500">

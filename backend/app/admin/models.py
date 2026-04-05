@@ -13,3 +13,10 @@ class ManualMemberCreate(BaseModel):
     role: str # 'PERMANENT', 'NORMAL', 'ASSOCIATED'
     zonal_committee: Optional[str] = None
     regional_committee: Optional[str] = None
+
+class ResetPINRequest(BaseModel):
+    user_id: str
+
+class MatrimonyApprovalRequest(BaseModel):
+    profile_id: str
+    action: str = "APPROVE" # or REJECT

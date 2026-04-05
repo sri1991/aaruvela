@@ -53,18 +53,20 @@ async def _authenticate_user(identifier: str, pin: str) -> dict:
         lambda: supabase.table("users")
         .select("id, identifier, role, status, pin_hash, failed_login_attempts, locked_until")
         .eq("identifier", identifier)
-        .single()
+        .limit(1)
         .execute()
     )
 
     if not result.data:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    user = result.data
+    user = result.data[0]
 
     # --- Lockout check ---
     if user.get("locked_until"):
         locked_until = datetime.fromisoformat(user["locked_until"].replace("Z", "+00:00"))
+        if locked_until.tzinfo is None:
+            locked_until = locked_until.replace(tzinfo=timezone.utc)
         if locked_until > _now_utc():
             raise HTTPException(
                 status_code=status.HTTP_423_LOCKED,

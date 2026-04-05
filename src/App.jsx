@@ -11,6 +11,9 @@ import MemberDashboard from './pages/MemberDashboard.jsx';
 import Donations from './pages/Donations.jsx';
 import Members from './pages/Members.jsx';
 import News from './pages/News.jsx';
+import MatrimonyLanding from './pages/Matrimony/MatrimonyLanding.jsx';
+import MatrimonyRegister from './pages/Matrimony/MatrimonyRegister.jsx';
+import MatrimonyMatches from './pages/Matrimony/MatrimonyMatches.jsx';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -55,6 +58,18 @@ function App() {
               <Route path="/donations" element={<Donations />} />
               <Route path="/members" element={<Members />} />
               <Route path="/news" element={<News />} />
+              
+              <Route path="/matrimony" element={<MatrimonyLanding />} />
+              <Route path="/matrimony/register" element={
+                <ProtectedRoute status="ACTIVE">
+                  <MatrimonyRegister />
+                </ProtectedRoute>
+              } />
+              <Route path="/matrimony/matches" element={
+                <ProtectedRoute status="ACTIVE">
+                  <MatrimonyMatches />
+                </ProtectedRoute>
+              } />
 
               <Route path="/membership" element={
                 <ProtectedRoute status="PENDING">

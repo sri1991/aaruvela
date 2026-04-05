@@ -46,7 +46,7 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
         lambda: supabase.table("users")
         .select("id, identifier, full_name, role, status, member_id, locked_until, failed_login_attempts, joined_at, created_at")
         .eq("id", user_id)
-        .single()
+        .limit(1)
         .execute()
     )
 
@@ -56,7 +56,7 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
             detail="User not found",
         )
 
-    return result.data
+    return result.data[0]
 
 
 async def require_role(required_role: str, current_user: dict = Depends(get_current_user)) -> dict:

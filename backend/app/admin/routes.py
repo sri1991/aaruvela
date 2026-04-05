@@ -1,9 +1,9 @@
 import logging
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import require_admin
 from app.db import get_supabase_client, run_query
-from app.admin.models import MemberApprovalRequest, ManualMemberCreate
+from app.admin.models import MemberApprovalRequest, ManualMemberCreate, ResetPINRequest, MatrimonyApprovalRequest
 from app.auth.utils import hash_pin
 
 # Membership registration fee by role (₹)
@@ -124,9 +124,10 @@ async def approve_request(
 
     # Preserve HEAD role if user is already an admin
     current = await run_query(
-        lambda: supabase.table("users").select("role").eq("id", request.user_id).single().execute()
+        lambda: supabase.table("users").select("role").eq("id", request.user_id).limit(1).execute()
     )
-    final_role = "HEAD" if (current.data and current.data.get("role") == "HEAD") else role
+    current_row = current.data[0] if current.data else None
+    final_role = "HEAD" if (current_row and current_row.get("role") == "HEAD") else role
 
     # Update user profile
     await run_query(
@@ -226,3 +227,75 @@ async def create_manual_member(
 
     logger.info("Admin %s manually created member %s (%s)", admin["id"], new_member_id, user_id)
     return {"message": "Member created successfully", "member_id": new_member_id, "user_id": user_id}
+
+@router.post("/reset-pin")
+async def reset_pin(
+    request: ResetPINRequest,
+    admin: dict = Depends(require_admin),
+):
+    """Reset a member's PIN to the role default (1234 or 2244)."""
+    supabase = get_supabase_client()
+
+    # 1. Fetch user role
+    result = await run_query(
+        lambda: supabase.table("users").select("role").eq("id", request.user_id).limit(1).execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    role = result.data[0].get("role")
+    new_pin = "2244" if role == "PERMANENT" else "1234"
+    new_hash = hash_pin(new_pin)
+
+    # 2. Update pin_hash
+    await run_query(
+        lambda: supabase.table("users")
+        .update({"pin_hash": new_hash, "failed_login_attempts": 0, "locked_until": None})
+        .eq("id", request.user_id)
+        .execute()
+    )
+
+    logger.info("Admin %s reset PIN for user %s to default", admin["id"], request.user_id)
+    return {"message": f"PIN reset to {new_pin} successfully"}
+
+@router.get("/matrimony-pending")
+async def get_pending_matrimony(admin: dict = Depends(require_admin)):
+    """List all pending matrimony profiles (admin only)."""
+    supabase = get_supabase_client()
+    result = await run_query(
+        lambda: supabase.table("matrimony_profiles")
+        .select("*")
+        .eq("payment_status", "PENDING")
+        .execute()
+    )
+    return result.data
+
+@router.post("/matrimony-approve")
+async def approve_matrimony(
+    request: MatrimonyApprovalRequest,
+    admin: dict = Depends(require_admin),
+):
+    """Approve or reject a matrimony profile payment/verification.
+    On approval sets a 30-day subscription window."""
+    supabase = get_supabase_client()
+
+    if request.action == "APPROVE":
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+        update_payload = {
+            "payment_status": "VERIFIED",
+            "status": "ACTIVE",
+            "subscription_expires_at": expires_at,
+        }
+    else:
+        update_payload = {"payment_status": "REJECTED"}
+
+    await run_query(
+        lambda: supabase.table("matrimony_profiles")
+        .update(update_payload)
+        .eq("id", request.profile_id)
+        .execute()
+    )
+
+    action_str = "approved" if request.action == "APPROVE" else "rejected"
+    logger.info("Admin %s %s matrimony profile %s", admin["id"], action_str, request.profile_id)
+    return {"message": f"Matrimony profile {action_str} successfully"}

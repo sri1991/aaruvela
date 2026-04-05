@@ -13,6 +13,7 @@ from app.members.routes import router as members_router
 from app.admin.routes import router as admin_router
 from app.articles.routes import router as articles_router
 from app.accounts.routes import router as accounts_router
+from app.matrimony.routes import router as matrimony_router
 
 # Configure root logger for the application
 logging.basicConfig(
@@ -81,6 +82,7 @@ app.include_router(members_router, prefix="/members", tags=["Membership"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(articles_router, prefix="/articles", tags=["Articles"])
 app.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])
+app.include_router(matrimony_router, prefix="/matrimony", tags=["Matrimony"])
 
 
 if __name__ == "__main__":
