@@ -28,6 +28,30 @@ CREATE TABLE IF NOT EXISTS public.matrimony_profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Migration: new profile fields (run if table already exists)
+ALTER TABLE public.matrimony_profiles
+    ADD COLUMN IF NOT EXISTS current_city TEXT,
+    ADD COLUMN IF NOT EXISTS brothers INTEGER,
+    ADD COLUMN IF NOT EXISTS sisters INTEGER,
+    ADD COLUMN IF NOT EXISTS willing_to_relocate BOOLEAN,
+    ADD COLUMN IF NOT EXISTS photos TEXT[],
+    ADD COLUMN IF NOT EXISTS place_of_birth TEXT;
+
+-- Migration: AID member sub-sect fields; drop unused raasi/dosha columns
+ALTER TABLE public.matrimony_profiles
+    ADD COLUMN IF NOT EXISTS sub_sect TEXT CHECK (sub_sect IN ('Yes', 'No')),
+    ADD COLUMN IF NOT EXISTS sect_no TEXT CHECK (sect_no IN ('Yes', 'No'));
+
+-- Drop raasi and dosha if they exist (run once)
+ALTER TABLE public.matrimony_profiles
+    DROP COLUMN IF EXISTS raasi,
+    DROP COLUMN IF EXISTS dosha;
+
+-- Backfill: move existing photo_url into photos array
+UPDATE public.matrimony_profiles
+    SET photos = ARRAY[photo_url]
+    WHERE photo_url IS NOT NULL AND (photos IS NULL OR array_length(photos, 1) IS NULL);
+
 -- RLS Policies
 ALTER TABLE public.matrimony_profiles ENABLE ROW LEVEL SECURITY;
 

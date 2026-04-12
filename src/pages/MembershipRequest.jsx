@@ -135,8 +135,22 @@ const MembershipRequest = () => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
+            // Calculate age from DOB
+            let age = null;
+            if (formData.bio_data.dob) {
+                const birthDate = new Date(formData.bio_data.dob);
+                const today = new Date();
+                age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+            }
+
             // Clean data: convert empty strings to null for optional/typed fields to avoid 422 error
             const submissionData = JSON.parse(JSON.stringify(formData));
+            submissionData.bio_data.age = age;
+            
             const nullIfEmpty = ['email', 'tob', 'annual_income'];
             nullIfEmpty.forEach(field => {
                 if (submissionData.bio_data[field] === '') submissionData.bio_data[field] = null;

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import MemberCard from '../components/MemberCard';
 import { Button, Input } from '../components/ui';
-import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info, Newspaper, FileText } from 'lucide-react';
+import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info, Newspaper, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
@@ -15,6 +15,10 @@ const MemberDashboard = () => {
     const cardRef = useRef(null);
     const [isEditing, setIsEditing] = React.useState(false);
     const [isChangingPin, setIsChangingPin] = React.useState(false);
+    const [renewalStatus, setRenewalStatus] = React.useState(null);
+    const [showRenewalForm, setShowRenewalForm] = React.useState(false);
+    const [renewalRef, setRenewalRef] = React.useState('');
+    const [submittingRenewal, setSubmittingRenewal] = React.useState(false);
     const [isSubmittingArticle, setIsSubmittingArticle] = React.useState(false);
     const [articleForm, setArticleForm] = React.useState({ title: '', summary: '', category: 'ARTICLE' });
     const [articlePdfFile, setArticlePdfFile] = React.useState(null);
@@ -33,6 +37,29 @@ const MemberDashboard = () => {
         regional_committee: '',
         photo_url: ''
     });
+
+    React.useEffect(() => {
+        const PERPETUAL = ['PERMANENT', 'HEAD'];
+        if (user && !PERPETUAL.includes(user.role)) {
+            api.get('/members/renewal-status').then(res => setRenewalStatus(res.data)).catch(() => {});
+        }
+    }, [user]);
+
+    const handleSubmitRenewal = async () => {
+        if (!renewalRef.trim()) { toast.error('Enter your UPI transaction reference'); return; }
+        setSubmittingRenewal(true);
+        try {
+            const res = await api.post('/members/request-renewal', { payment_reference: renewalRef });
+            toast.success(res.data.message);
+            setShowRenewalForm(false);
+            setRenewalRef('');
+            api.get('/members/renewal-status').then(res => setRenewalStatus(res.data)).catch(() => {});
+        } catch (err) {
+            toast.error(err.response?.data?.detail || 'Failed to submit renewal');
+        } finally {
+            setSubmittingRenewal(false);
+        }
+    };
 
     React.useEffect(() => {
         if (user) {
@@ -215,6 +242,41 @@ const MemberDashboard = () => {
                 </div>
             </div>
 
+            {/* Membership Expiry Banner */}
+            {renewalStatus && (() => {
+                const exp = renewalStatus.membership_expires_at ? new Date(renewalStatus.membership_expires_at) : null;
+                const now = new Date();
+                const daysLeft = exp ? Math.ceil((exp - now) / (1000 * 60 * 60 * 24)) : null;
+                const expired = daysLeft !== null && daysLeft <= 0;
+                const expiringSoon = daysLeft !== null && daysLeft > 0 && daysLeft <= 30;
+                if (!expired && !expiringSoon) return null;
+                return (
+                    <div className={`border-b px-4 py-3 ${expired ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle size={16} className={expired ? 'text-red-600 shrink-0' : 'text-amber-600 shrink-0'} />
+                                <span className={`text-sm font-bold ${expired ? 'text-red-800' : 'text-amber-800'}`}>
+                                    {expired
+                                        ? 'Your membership has expired. Renew to continue access.'
+                                        : `Membership expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — ${exp.toLocaleDateString('en-IN')}`}
+                                </span>
+                                {renewalStatus.pending_renewal && (
+                                    <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Renewal Pending Admin Approval</span>
+                                )}
+                            </div>
+                            {!renewalStatus.pending_renewal && (
+                                <button
+                                    onClick={() => setShowRenewalForm(true)}
+                                    className={`flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-xl transition-colors shrink-0 ${expired ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
+                                >
+                                    <RefreshCw size={13} /> Renew Now
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                );
+            })()}
+
             <div className="max-w-7xl mx-auto px-4 py-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
@@ -270,20 +332,48 @@ const MemberDashboard = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FeatureCard
-                                icon={<Heart className="text-pink-500" />}
-                                title="Matrimony Hub"
-                                description="Find your life partner within our trusted community network."
-                                status="Coming Soon"
-                                color="pink"
-                            />
-                            <FeatureCard
-                                icon={<Users className="text-blue-500" />}
-                                title="Member Directory"
-                                description="Connect with fellow members across zones and regions."
-                                status="Coming Soon"
-                                color="blue"
-                            />
+                            {/* Matrimony — Active */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                <div className="flex items-start gap-5 mb-6">
+                                    <div className="p-4 rounded-3xl bg-pink-50 shrink-0 group-hover:scale-110 transition-transform">
+                                        <Heart size={24} className="text-pink-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-black text-gray-900 mb-1">Matrimony Hub</h4>
+                                        <p className="text-xs text-gray-500 leading-relaxed font-medium">Find your life partner within our trusted community network.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-pink-50 text-pink-600 rounded-full">Active</span>
+                                    <button
+                                        onClick={() => navigate('/matrimony')}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-gray-900 hover:bg-gray-700 px-4 py-2 rounded-xl transition-colors"
+                                    >
+                                        Open <ChevronRight size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                            {/* Member Directory — Active */}
+                            <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                <div className="flex items-start gap-5 mb-6">
+                                    <div className="p-4 rounded-3xl bg-blue-50 shrink-0 group-hover:scale-110 transition-transform">
+                                        <Users size={24} className="text-blue-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-black text-gray-900 mb-1">Member Directory</h4>
+                                        <p className="text-xs text-gray-500 leading-relaxed font-medium">Connect with fellow members across zones and regions.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-blue-50 text-blue-600 rounded-full">Active</span>
+                                    <button
+                                        onClick={() => navigate('/members')}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-gray-900 hover:bg-gray-700 px-4 py-2 rounded-xl transition-colors"
+                                    >
+                                        Open <ChevronRight size={13} />
+                                    </button>
+                                </div>
+                            </div>
                             {/* News & Articles — Active */}
                             <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden md:col-span-2">
                                 <div className="flex items-start justify-between gap-4">
@@ -495,6 +585,50 @@ const MemberDashboard = () => {
                                 <Button onClick={() => setIsEditing(false)} variant="outline" className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-bold text-gray-600 hover:bg-gray-50">Cancel</Button>
                                 <Button onClick={handleSaveProfile} className="flex-1 h-12 rounded-xl shadow-lg shadow-primary/20 font-black tracking-widest uppercase text-xs">Save Changes</Button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Renewal Form Modal */}
+            {showRenewalForm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 relative">
+                        <button onClick={() => setShowRenewalForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-1 bg-gray-100 rounded-full">
+                            <X size={18} />
+                        </button>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 rounded-2xl bg-amber-50">
+                                <RefreshCw size={20} className="text-amber-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900">Renew Membership</h3>
+                                <p className="text-xs text-gray-500">Annual renewal — valid for 1 year</p>
+                            </div>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-5 text-sm text-amber-800 space-y-1">
+                            <p className="font-bold">Pay annual renewal fee via UPI:</p>
+                            <p className="font-mono text-xs">UPI ID: <span className="font-black">6000niyogi@sbi</span></p>
+                            <p className="text-xs text-amber-600">After payment, enter the UTR / transaction reference below.</p>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Transaction UTR / Reference *</label>
+                                <input
+                                    type="text"
+                                    value={renewalRef}
+                                    onChange={e => setRenewalRef(e.target.value)}
+                                    placeholder="e.g. UPI-12345678"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-sm"
+                                />
+                            </div>
+                            <button
+                                onClick={handleSubmitRenewal}
+                                disabled={submittingRenewal || !renewalRef.trim()}
+                                className="w-full py-3 rounded-xl bg-amber-600 text-white font-bold text-sm hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {submittingRenewal ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                Submit Renewal Request
+                            </button>
                         </div>
                     </div>
                 </div>

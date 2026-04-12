@@ -8,7 +8,7 @@ from app.db import get_supabase_client, run_query
 from app.matrimony.models import MatrimonyProfileCreate, MatrimonyRenewRequest
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_IMAGE_SIZE = 3 * 1024 * 1024  # 3MB per photo (max 3 photos = 6MB total enforced client-side)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -95,6 +95,9 @@ async def create_profile(
         profile_data["dob"] = profile_data["dob"].isoformat()
     if "tob" in profile_data and profile_data["tob"]:
         profile_data["tob"] = profile_data["tob"].isoformat()
+    # Keep photo_url in sync with first photo for backward compatibility
+    if "photos" in profile_data and profile_data["photos"]:
+        profile_data["photo_url"] = profile_data["photos"][0]
 
     profile_data["user_id"] = user_id
     profile_data["payment_status"] = "PENDING"
@@ -226,7 +229,7 @@ async def get_matches(current_user: dict = Depends(require_active_status)):
 
     matches_res = await run_query(
         lambda: supabase.table("matrimony_profiles")
-        .select("id, full_name, gender, age, gotram, star_with_pada, occupation, photo_url, parishat_id")
+        .select("id, full_name, gender, age, gotram, star_with_pada, occupation, current_city, photo_url, photos, parishat_id")
         .eq("gender", target_gender)
         .eq("status", "ACTIVE")
         .eq("payment_status", "VERIFIED")

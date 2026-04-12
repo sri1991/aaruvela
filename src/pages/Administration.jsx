@@ -51,17 +51,17 @@ const Administration = () => {
     ];
 
     const executiveMembers = [
-        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", post: "Hon’ble President", mobile: "9849476726" },
-        { name: "Chiruvolu Srinivasarao", post: "President", mobile: "9885063577" },
-        { name: "Chayanam Srinivasa Murthy", post: "Vice-President", mobile: "9440326363" },
-        { name: "Chiruvolu Satya Srinivas", post: "Co-Vice President", mobile: "9491223344" },
-        { name: "Kunderu Kanubabu", post: "Secretary", mobile: "8309874005" },
-        { name: "Vadrevu Sarabharaju", post: "Asst. Secretary", mobile: "9866103483" },
-        { name: "Nadakuditi Sreeramachandra Murthy", post: "Treasurer", mobile: "9848645899" },
-        { name: "Nerella Gnana Satya Venkatanarayana", post: "Member", mobile: "9848747447" },
-        { name: "Vadrevu Srinivas", post: "Member", mobile: "7997459859" },
-        { name: "Ventrapragada Venugopalarao", post: "Member", mobile: "9440097872" },
-        { name: "Koochimanchi Sasidhara Sriram", post: "Member", mobile: "9246832468" },
+        { name: "Vadrevu Venkata Satya Narasimha Venugopala Rao", post: "Hon’ble President", mobile: "9849476726", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/venugopal.jpeg" },
+        { name: "Chiruvolu Srinivasarao", post: "President", mobile: "9885063577", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/ChSrinivasarao.jpeg" },
+        { name: "Chayanam Srinivasa Murthy", post: "Vice-President", mobile: "9440326363", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Chayanam.jpeg" },
+        { name: "Chiruvolu Satya Srinivas", post: "Co-Vice President", mobile: "9491223344", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/chsrinivas2.jpeg" },
+        { name: "Kunderu Kanubabu", post: "Secretary", mobile: "8309874005", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/kanubabu.jpeg" },
+        { name: "Vadrevu Sarabharaju", post: "Asst. Secretary", mobile: "9866103483", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Sarabharaju.jpeg" },
+        { name: "Nadakuditi Sreeramachandra Murthy", post: "Treasurer", mobile: "9848645899", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Nadakuditi.jpeg" },
+        { name: "Nerella Gnana Satya Venkatanarayana", post: "Member", mobile: "9848747447", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Nerella.jpeg" },
+        { name: "Vadrevu Srinivas", post: "Member", mobile: "7997459859", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Vadrevu%20Srinivas.jpeg" },
+        { name: "Ventrapragada Venugopalarao", post: "Member", mobile: "9440097872", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Ventrapragada.jpeg" },
+        { name: "Koochimanchi Sasidhara Sriram", post: "Member", mobile: "9246832468", image: "https://pbyhqbnfmwgdjsbjriaf.supabase.co/storage/v1/object/public/founders/Kuchimanchi.jpeg" },
     ];
 
     const tabs = [
@@ -72,7 +72,6 @@ const Administration = () => {
         { id: 'regional', label: 'Region' },
         { id: 'legal', label: 'Legal Details' },
         { id: 'message', label: 'Chairman Message' },
-        { id: 'account', label: 'Account' },
     ];
 
     return (
@@ -81,7 +80,7 @@ const Administration = () => {
 
                 {/* Tab Navigation */}
                 <div className="mb-8">
-                    <div className="bg-gray-100 p-2 rounded-xl grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 shadow-inner w-full">
+                    <div className="bg-gray-100 p-2 rounded-xl grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 shadow-inner w-full">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
@@ -340,7 +339,7 @@ const Administration = () => {
                 )}
 
                 {/* Placeholder Sections for Other Tabs */}
-                {['divisional', 'account'].includes(activeTab) && (
+                {['divisional'].includes(activeTab) && (
                     <section className="animate-in fade-in zoom-in-95 duration-300 py-12 text-center text-gray-500">
                         <h2 className="text-2xl font-bold text-gray-400 mb-2 capitalize">{tabs.find(t => t.id === activeTab)?.label}</h2>
                         <p>Content coming soon...</p>

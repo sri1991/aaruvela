@@ -3,7 +3,7 @@ from datetime import datetime, date, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import require_admin
 from app.db import get_supabase_client, run_query
-from app.admin.models import MemberApprovalRequest, ManualMemberCreate, ResetPINRequest, MatrimonyApprovalRequest
+from app.admin.models import MemberApprovalRequest, ManualMemberCreate, ResetPINRequest, MatrimonyApprovalRequest, RenewMembershipRequest
 from app.auth.utils import hash_pin
 
 # Membership registration fee by role (₹)
@@ -41,8 +41,14 @@ ROLE_PREFIXES = {
 }
 
 
+PERPETUAL_ROLES = {"PERMANENT", "HEAD"}
+
 def _now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+def _membership_expiry() -> str:
+    """1 year from now."""
+    return (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
 
 
 async def _generate_member_id(supabase, role: str) -> str:
@@ -130,11 +136,11 @@ async def approve_request(
     final_role = "HEAD" if (current_row and current_row.get("role") == "HEAD") else role
 
     # Update user profile
+    user_update = {"role": final_role, "status": "ACTIVE", "member_id": new_member_id, "updated_at": _now_utc()}
+    if final_role not in PERPETUAL_ROLES:
+        user_update["membership_expires_at"] = _membership_expiry()
     await run_query(
-        lambda: supabase.table("users")
-        .update({"role": final_role, "status": "ACTIVE", "member_id": new_member_id, "updated_at": _now_utc()})
-        .eq("id", request.user_id)
-        .execute()
+        lambda: supabase.table("users").update(user_update).eq("id", request.user_id).execute()
     )
 
     # Update membership request by its own ID (not user_id) to avoid touching wrong rows
@@ -202,6 +208,8 @@ async def create_manual_member(
         "member_id": new_member_id,
         "updated_at": _now_utc(),
     }
+    if request.role not in PERPETUAL_ROLES:
+        update_data["membership_expires_at"] = _membership_expiry()
     if request.zonal_committee:
         update_data["zonal_committee"] = request.zonal_committee
     if request.regional_committee:
@@ -257,6 +265,53 @@ async def reset_pin(
 
     logger.info("Admin %s reset PIN for user %s to default", admin["id"], request.user_id)
     return {"message": f"PIN reset to {new_pin} successfully"}
+
+@router.get("/renewal-requests")
+async def get_renewal_requests(admin: dict = Depends(require_admin)):
+    """List all pending annual membership renewal requests."""
+    supabase = get_supabase_client()
+    result = await run_query(
+        lambda: supabase.table("membership_requests")
+        .select("*, users(id, full_name, phone, identifier, role, member_id, membership_expires_at)")
+        .eq("request_type", "RENEWAL")
+        .eq("approval_status", "PENDING")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data
+
+
+@router.post("/renew-membership")
+async def renew_membership(
+    request: RenewMembershipRequest,
+    admin: dict = Depends(require_admin),
+):
+    """
+    Approve an annual membership renewal — extends membership_expires_at by 1 year from today.
+    Call after verifying the member's payment offline.
+    """
+    supabase = get_supabase_client()
+
+    # Extend expiry
+    await run_query(
+        lambda: supabase.table("users")
+        .update({"membership_expires_at": _membership_expiry(), "updated_at": _now_utc()})
+        .eq("id", request.user_id)
+        .execute()
+    )
+
+    # Mark renewal request as approved if provided
+    if request.request_id:
+        await run_query(
+            lambda: supabase.table("membership_requests")
+            .update({"approval_status": "APPROVED", "admin_notes": request.admin_notes or "Renewed by admin"})
+            .eq("id", request.request_id)
+            .execute()
+        )
+
+    logger.info("Admin %s renewed membership for user %s", admin["id"], request.user_id)
+    return {"message": "Membership renewed for 1 year"}
+
 
 @router.get("/matrimony-pending")
 async def get_pending_matrimony(admin: dict = Depends(require_admin)):

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuth } from '../../features/auth/AuthContext';
-import { ShieldCheck, Heart, Loader2, UploadCloud, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Heart, Loader2, UploadCloud, User, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 // ₹10/month — update UPI_ID to the parishat's UPI handle
@@ -26,25 +26,36 @@ const MatrimonyRegister = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [photos, setPhotos] = useState([]); // [{url, size}]
     const [formData, setFormData] = useState({
         full_name: '',
         gender: 'MALE',
         parishat_id: '',
         father_guardian_name: '',
         age: '',
+        brothers: '',
+        sisters: '',
+        willing_to_relocate: '',
         dob: '',
         tob: '',
         gotram: '',
         star_with_pada: '',
+        place_of_birth: '',
+        current_city: '',
         occupation: '',
         annual_income: '',
+        sub_sect: '',
+        sect_no: '',
         particulars: '',
         requirement: '',
         contact_no: '',
         email: '',
         payment_reference: '',
-        photo_url: ''
     });
+
+    const MAX_PHOTOS = 3;
+    const MAX_TOTAL_BYTES = 6 * 1024 * 1024; // 6MB total
+    const totalUploadedSize = photos.reduce((sum, p) => sum + p.size, 0);
 
     // Preload member data from auth context
     useEffect(() => {
@@ -63,13 +74,22 @@ const MatrimonyRegister = () => {
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
+        e.target.value = ''; // reset so same file can be re-selected after remove
         if (!file) return;
         if (!file.type.startsWith('image/')) {
             toast.error('Only image files are allowed');
             return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image must be under 5MB');
+        if (file.size > 3 * 1024 * 1024) {
+            toast.error('Each photo must be under 3MB');
+            return;
+        }
+        if (photos.length >= MAX_PHOTOS) {
+            toast.error(`Maximum ${MAX_PHOTOS} photos allowed`);
+            return;
+        }
+        if (totalUploadedSize + file.size > MAX_TOTAL_BYTES) {
+            toast.error('Total photo size cannot exceed 6MB');
             return;
         }
 
@@ -80,13 +100,17 @@ const MatrimonyRegister = () => {
             const res = await api.post('/matrimony/upload-photo', formPayload, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            setFormData(prev => ({ ...prev, photo_url: res.data.url }));
-            toast.success('Photo uploaded successfully!');
+            setPhotos(prev => [...prev, { url: res.data.url, size: file.size }]);
+            toast.success('Photo uploaded!');
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to upload photo. Contact admin.');
         } finally {
             setUploadingImage(false);
         }
+    };
+
+    const removePhoto = (index) => {
+        setPhotos(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleChange = (e) => {
@@ -106,8 +130,8 @@ const MatrimonyRegister = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.photo_url) {
-            toast.error('A profile photo is required before submitting.');
+        if (photos.length === 0) {
+            toast.error('At least one profile photo is required before submitting.');
             return;
         }
         if (particularsWords > PARTICULARS_WORD_LIMIT) {
@@ -121,7 +145,7 @@ const MatrimonyRegister = () => {
 
         setLoading(true);
         try {
-            const payload = { ...formData };
+            const payload = { ...formData, photos: photos.map(p => p.url) };
 
             // Coerce age
             if (payload.age === '' || payload.age === null) payload.age = null;
@@ -130,9 +154,22 @@ const MatrimonyRegister = () => {
             // Append seconds to time if browser omits them
             if (payload.tob && payload.tob.length === 5) payload.tob = payload.tob + ':00';
 
+            // Coerce integer fields
+            for (const key of ['brothers', 'sisters']) {
+                if (payload[key] === '' || payload[key] === null) payload[key] = null;
+                else { const n = parseInt(payload[key]); payload[key] = isNaN(n) ? null : n; }
+            }
+
+            // Coerce boolean
+            if (payload.willing_to_relocate === '') payload.willing_to_relocate = null;
+            else if (payload.willing_to_relocate === 'true') payload.willing_to_relocate = true;
+            else if (payload.willing_to_relocate === 'false') payload.willing_to_relocate = false;
+
             // Null-out any optional string fields left as empty string
             const optionalStrings = ['father_guardian_name', 'gotram', 'star_with_pada',
-                'occupation', 'annual_income', 'particulars', 'requirement', 'contact_no', 'email'];
+                'place_of_birth', 'current_city', 'occupation', 'annual_income',
+                'sub_sect', 'sect_no',
+                'particulars', 'requirement', 'contact_no', 'email'];
             for (const key of optionalStrings) {
                 if (payload[key] === '') payload[key] = null;
             }
@@ -147,24 +184,24 @@ const MatrimonyRegister = () => {
         }
     };
 
-    const inputCls = "w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-colors";
+    const inputCls = "w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors";
     const readonlyCls = "w-full px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 outline-none cursor-not-allowed";
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4">
             <div className="container mx-auto max-w-3xl">
-                <div className="bg-white rounded-3xl shadow-sm border border-rose-100 overflow-hidden">
-                    <div className="bg-rose-900 px-8 py-6 text-white flex items-center justify-between">
+                <div className="bg-white rounded-3xl shadow-sm border border-blue-100 overflow-hidden">
+                    <div className="bg-blue-900 px-8 py-6 text-white flex items-center justify-between">
                         <div>
                             <h2 className="text-2xl font-black flex items-center gap-3">
-                                <Heart className="text-rose-300" />
+                                <Heart className="text-blue-300" />
                                 6000N Matrimony Registration
                             </h2>
-                            <p className="text-rose-200 text-sm mt-1 opacity-90">
+                            <p className="text-blue-200 text-sm mt-1 opacity-90">
                                 Your personal bio-data profile — for yourself only.
                             </p>
                         </div>
-                        <ShieldCheck size={40} className="text-rose-500/30" />
+                        <ShieldCheck size={40} className="text-blue-500/30" />
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-8 space-y-8">
@@ -217,29 +254,69 @@ const MatrimonyRegister = () => {
                                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Father / Guardian Name</label>
                                     <input type="text" name="father_guardian_name" value={formData.father_guardian_name} onChange={handleChange} className={inputCls} />
                                 </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Brothers</label>
+                                    <input type="number" min="0" name="brothers" value={formData.brothers} onChange={handleChange} className={inputCls} placeholder="0" />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Sisters</label>
+                                    <input type="number" min="0" name="sisters" value={formData.sisters} onChange={handleChange} className={inputCls} placeholder="0" />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Willing to Relocate</label>
+                                    <select name="willing_to_relocate" value={formData.willing_to_relocate} onChange={handleChange} className={`${inputCls} bg-white`}>
+                                        <option value="">Select</option>
+                                        <option value="true">Yes</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            {/* Photo Upload — Mandatory */}
-                            <div className="mt-6 flex flex-col md:flex-row items-center gap-6 bg-gray-50 border border-gray-200 p-6 rounded-2xl">
-                                <div className={`w-24 h-24 rounded-full border-2 flex items-center justify-center overflow-hidden shrink-0 ${formData.photo_url ? 'border-green-400' : 'border-dashed border-rose-400 bg-rose-50'}`}>
-                                    {formData.photo_url ? (
-                                        <img src={formData.photo_url} alt="Profile" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User size={32} className="text-rose-300" />
-                                    )}
-                                </div>
-                                <div className="flex-1 text-center md:text-left">
-                                    <h4 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-1">
-                                        Profile Photo
-                                        <span className="text-rose-500 text-xs font-bold">(Required)</span>
-                                        {formData.photo_url && <CheckCircle size={14} className="text-green-500 ml-1" />}
+                            {/* Photo Upload — Mandatory, up to 3 */}
+                            <div className="mt-6 bg-gray-50 border border-gray-200 p-5 rounded-2xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                                        Profile Photos
+                                        <span className="text-blue-500 text-xs font-bold">(At least 1 required)</span>
+                                        {photos.length > 0 && <CheckCircle size={14} className="text-green-500 ml-1" />}
                                     </h4>
-                                    <p className="text-xs text-gray-500 mb-3">Upload a clear, recent photo. Max 5MB. JPG/PNG preferred.</p>
-                                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-sm cursor-pointer transition-colors ${formData.photo_url ? 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100' : 'bg-white border border-rose-300 text-rose-700 hover:bg-rose-50'}`}>
-                                        {uploadingImage ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                                        {uploadingImage ? 'Uploading...' : formData.photo_url ? 'Change Photo' : 'Upload Photo *'}
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
-                                    </label>
+                                    <span className={`text-xs font-semibold ${totalUploadedSize > MAX_TOTAL_BYTES * 0.85 ? 'text-blue-500' : 'text-gray-400'}`}>
+                                        {(totalUploadedSize / (1024 * 1024)).toFixed(1)} / 6 MB
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4">Upload up to 3 photos. Max 3MB each, 6MB total. JPG/PNG/WebP.</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {photos.map((photo, i) => (
+                                        <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-green-300 shrink-0">
+                                            <img src={photo.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removePhoto(i)}
+                                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                            {i === 0 && (
+                                                <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] font-bold bg-green-600 text-white py-0.5">MAIN</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {photos.length < MAX_PHOTOS && (
+                                        <label className={`w-24 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer shrink-0 transition-colors ${uploadingImage ? 'border-gray-200 bg-gray-100' : 'border-blue-300 bg-blue-50 hover:bg-blue-100'}`}>
+                                            {uploadingImage ? (
+                                                <Loader2 size={20} className="animate-spin text-gray-400" />
+                                            ) : (
+                                                <>
+                                                    <UploadCloud size={20} className="text-blue-400 mb-1" />
+                                                    <span className="text-[10px] font-bold text-blue-500">Add Photo</span>
+                                                </>
+                                            )}
+                                            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -264,13 +341,46 @@ const MatrimonyRegister = () => {
                                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Star with Pada</label>
                                     <input type="text" name="star_with_pada" value={formData.star_with_pada} onChange={handleChange} className={inputCls} placeholder="e.g. Ashwini - 1" />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Place of Birth</label>
+                                    <input type="text" name="place_of_birth" value={formData.place_of_birth} onChange={handleChange} className={inputCls} placeholder="e.g. Hyderabad" />
+                                </div>
                             </div>
+
+                            {/* AID-only: Sub-sect fields */}
+                            {user?.role === 'ASSOCIATED' && (
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                                    <div className="md:col-span-2">
+                                        <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-3">Associated Member Details</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Sub-Sect</label>
+                                        <select name="sub_sect" value={formData.sub_sect} onChange={handleChange} className={`${inputCls} bg-white`}>
+                                            <option value="">Select</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Sect No</label>
+                                        <select name="sect_no" value={formData.sect_no} onChange={handleChange} className={`${inputCls} bg-white`}>
+                                            <option value="">Select</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Section 3: Professional & Contact */}
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-4 border-gray-100">Professional & Contact</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Current City</label>
+                                    <input type="text" name="current_city" value={formData.current_city} onChange={handleChange} className={inputCls} placeholder="e.g. Hyderabad" />
+                                </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Occupation</label>
                                     <input type="text" name="occupation" value={formData.occupation} onChange={handleChange} className={inputCls} />
@@ -300,7 +410,7 @@ const MatrimonyRegister = () => {
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Particulars (Description)</label>
-                                        <span className={`text-xs font-semibold ${particularsWords >= PARTICULARS_WORD_LIMIT ? 'text-rose-600' : 'text-gray-400'}`}>
+                                        <span className={`text-xs font-semibold ${particularsWords >= PARTICULARS_WORD_LIMIT ? 'text-blue-600' : 'text-gray-400'}`}>
                                             {particularsWords}/{PARTICULARS_WORD_LIMIT} words
                                         </span>
                                     </div>
@@ -313,13 +423,13 @@ const MatrimonyRegister = () => {
                                         placeholder="Physical description, height, complexion, place of origin, family background etc."
                                     />
                                     {particularsWords >= PARTICULARS_WORD_LIMIT && (
-                                        <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertCircle size={12} /> Word limit reached</p>
+                                        <p className="text-xs text-blue-500 mt-1 flex items-center gap-1"><AlertCircle size={12} /> Word limit reached</p>
                                     )}
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
                                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Requirements</label>
-                                        <span className={`text-xs font-semibold ${requirementWords >= REQUIREMENT_WORD_LIMIT ? 'text-rose-600' : 'text-gray-400'}`}>
+                                        <span className={`text-xs font-semibold ${requirementWords >= REQUIREMENT_WORD_LIMIT ? 'text-blue-600' : 'text-gray-400'}`}>
                                             {requirementWords}/{REQUIREMENT_WORD_LIMIT} words
                                         </span>
                                     </div>
@@ -332,7 +442,7 @@ const MatrimonyRegister = () => {
                                         placeholder="Partner expectations — education, occupation, region, family preference etc."
                                     />
                                     {requirementWords >= REQUIREMENT_WORD_LIMIT && (
-                                        <p className="text-xs text-rose-500 mt-1 flex items-center gap-1"><AlertCircle size={12} /> Word limit reached</p>
+                                        <p className="text-xs text-blue-500 mt-1 flex items-center gap-1"><AlertCircle size={12} /> Word limit reached</p>
                                     )}
                                 </div>
                             </div>
@@ -341,11 +451,11 @@ const MatrimonyRegister = () => {
                         {/* Section 5: Payment — UPI QR + Reference */}
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 border-b pb-2 mb-4 border-gray-100">Monthly Subscription Payment</h3>
-                            <div className="bg-rose-50 border border-rose-100 rounded-2xl overflow-hidden">
+                            <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
                                 <div className="p-5 flex flex-col md:flex-row gap-6 items-center">
                                     {/* QR Code */}
                                     <div className="flex flex-col items-center shrink-0">
-                                        <div className="bg-white p-3 rounded-xl shadow-sm border border-rose-100">
+                                        <div className="bg-white p-3 rounded-xl shadow-sm border border-blue-100">
                                             <img
                                                 src={UPI_QR_URL}
                                                 alt="UPI QR Code"
@@ -353,18 +463,18 @@ const MatrimonyRegister = () => {
                                                 onError={(e) => { e.target.style.display = 'none'; }}
                                             />
                                         </div>
-                                        <p className="text-[10px] text-rose-700 font-semibold mt-2 text-center">Scan with any UPI app</p>
+                                        <p className="text-[10px] text-blue-700 font-semibold mt-2 text-center">Scan with any UPI app</p>
                                     </div>
 
                                     {/* Payment details */}
                                     <div className="flex-1 space-y-3">
                                         <div>
-                                            <p className="text-sm font-black text-rose-900">₹{SUBSCRIPTION_FEE}/month subscription</p>
-                                            <p className="text-xs text-rose-700 mt-0.5 leading-relaxed">
+                                            <p className="text-sm font-black text-blue-900">₹{SUBSCRIPTION_FEE}/month subscription</p>
+                                            <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
                                                 Pay ₹{SUBSCRIPTION_FEE} to activate your profile for 1 month. Admin will verify and approve your listing.
                                             </p>
                                         </div>
-                                        <div className="bg-white rounded-xl p-3 border border-rose-100 space-y-1">
+                                        <div className="bg-white rounded-xl p-3 border border-blue-100 space-y-1">
                                             <div className="flex justify-between text-xs">
                                                 <span className="text-gray-500">UPI ID</span>
                                                 <span className="font-bold text-gray-800 font-mono">{UPI_ID}</span>
@@ -375,12 +485,12 @@ const MatrimonyRegister = () => {
                                             </div>
                                             <div className="flex justify-between text-xs">
                                                 <span className="text-gray-500">Amount</span>
-                                                <span className="font-bold text-rose-700">₹{SUBSCRIPTION_FEE}</span>
+                                                <span className="font-bold text-blue-700">₹{SUBSCRIPTION_FEE}</span>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-bold text-rose-800 mb-1 uppercase tracking-wider">
+                                            <label className="block text-xs font-bold text-blue-800 mb-1 uppercase tracking-wider">
                                                 Transaction UTR / Reference *
                                             </label>
                                             <input
@@ -389,7 +499,7 @@ const MatrimonyRegister = () => {
                                                 name="payment_reference"
                                                 value={formData.payment_reference}
                                                 onChange={handleChange}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none bg-white"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
                                                 placeholder="e.g. UPI-12345678 or UTR number"
                                             />
                                         </div>
@@ -397,7 +507,7 @@ const MatrimonyRegister = () => {
                                 </div>
 
                                 {/* Photo missing warning */}
-                                {!formData.photo_url && (
+                                {photos.length === 0 && (
                                     <div className="bg-amber-50 border-t border-amber-100 px-5 py-3 flex items-center gap-2">
                                         <AlertCircle size={14} className="text-amber-600 shrink-0" />
                                         <p className="text-xs text-amber-700 font-medium">Please upload a profile photo above before submitting.</p>
@@ -415,7 +525,7 @@ const MatrimonyRegister = () => {
                                 Cancel
                             </button>
                             <button
-                                disabled={loading || uploadingImage || !formData.photo_url}
+                                disabled={loading || uploadingImage || photos.length === 0}
                                 type="submit"
                                 className="bg-[var(--color-primary)] text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >

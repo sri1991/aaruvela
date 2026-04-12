@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.dependencies import get_current_user_id, require_active_status
 from app.db import get_supabase_client, run_query
-from app.members.models import MembershipApplicationRequest, MembershipApplicationResponse
+from app.members.models import MembershipApplicationRequest, MembershipApplicationResponse, RenewalRequest
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -98,6 +98,92 @@ async def get_member_profile(
     if not result.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
     return result.data
+
+
+@router.post("/request-renewal")
+async def request_renewal(
+    request: RenewalRequest,
+    current_user: dict = Depends(get_current_user_id),
+):
+    """
+    Submit an annual membership renewal request with UPI payment reference.
+    Admin will verify payment and approve.
+    """
+    supabase = get_supabase_client()
+    user_id = current_user if isinstance(current_user, str) else current_user["id"]
+
+    # Check current role
+    user_res = await run_query(
+        lambda: supabase.table("users").select("role, member_id").eq("id", user_id).limit(1).execute()
+    )
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_data = user_res.data[0]
+    role = user_data.get("role")
+
+    if role in ("PERMANENT", "HEAD"):
+        raise HTTPException(status_code=400, detail="Permanent members do not require annual renewal.")
+
+    # Check no duplicate pending renewal
+    existing = await run_query(
+        lambda: supabase.table("membership_requests")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("request_type", "RENEWAL")
+        .eq("approval_status", "PENDING")
+        .execute()
+    )
+    if existing.data:
+        raise HTTPException(status_code=400, detail="You already have a pending renewal request.")
+
+    record = {
+        "user_id": user_id,
+        "requested_role": role,
+        "request_type": "RENEWAL",
+        "payment_reference": request.payment_reference,
+        "payment_status": "PAID",
+        "approval_status": "PENDING",
+        "admin_notes": f"Annual renewal — UTR: {request.payment_reference}",
+    }
+    result = await run_query(lambda: supabase.table("membership_requests").insert(record).execute())
+
+    logger.info("User %s submitted membership renewal request", user_id)
+    return {"message": "Renewal request submitted. Admin will verify and approve.", "request_id": result.data[0]["id"]}
+
+
+@router.get("/renewal-status")
+async def get_renewal_status(user_id: str = Depends(get_current_user_id)):
+    """Return this member's membership expiry date and any pending renewal request."""
+    supabase = get_supabase_client()
+
+    user_res = await run_query(
+        lambda: supabase.table("users")
+        .select("role, membership_expires_at")
+        .eq("id", user_id)
+        .limit(1)
+        .execute()
+    )
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_data = user_res.data[0]
+
+    pending_res = await run_query(
+        lambda: supabase.table("membership_requests")
+        .select("id, approval_status, created_at")
+        .eq("user_id", user_id)
+        .eq("request_type", "RENEWAL")
+        .eq("approval_status", "PENDING")
+        .limit(1)
+        .execute()
+    )
+
+    return {
+        "role": user_data.get("role"),
+        "membership_expires_at": user_data.get("membership_expires_at"),
+        "pending_renewal": pending_res.data[0] if pending_res.data else None,
+    }
 
 
 @router.get("/status")

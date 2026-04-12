@@ -1,8 +1,11 @@
 import logging
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth.utils import decode_access_token
 from app.db import get_supabase_client, run_query
+
+PERPETUAL_ROLES = {"PERMANENT", "HEAD"}
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
@@ -44,7 +47,7 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
     supabase = get_supabase_client()
     result = await run_query(
         lambda: supabase.table("users")
-        .select("id, identifier, full_name, role, status, member_id, locked_until, failed_login_attempts, joined_at, created_at")
+        .select("id, identifier, full_name, role, status, member_id, membership_expires_at, locked_until, failed_login_attempts, joined_at, created_at")
         .eq("id", user_id)
         .limit(1)
         .execute()
@@ -77,10 +80,22 @@ async def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
 
 
 async def require_active_status(current_user: dict = Depends(get_current_user)) -> dict:
-    """Dependency: require ACTIVE account status."""
+    """Dependency: require ACTIVE account status and non-expired membership."""
     if current_user.get("status") != "ACTIVE":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is not active",
         )
+    # Permanent and HEAD members never expire
+    if current_user.get("role") not in PERPETUAL_ROLES:
+        expires_at = current_user.get("membership_expires_at")
+        if expires_at:
+            expiry = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if expiry < datetime.now(timezone.utc):
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail="Membership expired. Please renew your annual membership.",
+                )
     return current_user

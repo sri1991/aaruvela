@@ -259,6 +259,19 @@ CREATE TRIGGER update_presence_updated_at BEFORE UPDATE ON presence
 -- INSERT INTO users (identifier, role, status) VALUES
 --   ('admin@example.com', 'HEAD', 'ACTIVE');
 
+-- =====================================================
+-- MEMBERSHIP VALIDITY MIGRATION
+-- =====================================================
+
+-- Add yearly membership expiry for non-permanent members
+ALTER TABLE public.users
+    ADD COLUMN IF NOT EXISTS membership_expires_at TIMESTAMP WITH TIME ZONE;
+
+-- Add renewal tracking columns to membership_requests
+ALTER TABLE public.membership_requests
+    ADD COLUMN IF NOT EXISTS request_type TEXT DEFAULT 'APPLICATION',
+    ADD COLUMN IF NOT EXISTS payment_reference TEXT;
+
 COMMENT ON TABLE users IS 'Application users with roles and status';
 COMMENT ON TABLE membership_requests IS 'Membership requests requiring payment and approval';
 COMMENT ON TABLE payments IS 'Payment transaction records';

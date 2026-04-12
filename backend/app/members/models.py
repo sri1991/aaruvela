@@ -18,6 +18,9 @@ class UserBioData(BaseModel):
     email: Optional[EmailStr] = None
     photo_url: Optional[str] = None
     payment_proof_url: Optional[str] = None
+    zonal_committee: Optional[str] = None
+    regional_committee: Optional[str] = None
+    age: Optional[int] = None
     requirement: Optional[str] = None
     particulars: Optional[str] = None
 
@@ -29,3 +32,6 @@ class MembershipApplicationResponse(BaseModel):
     message: str
     application_id: str
     status: str
+
+class RenewalRequest(BaseModel):
+    payment_reference: str

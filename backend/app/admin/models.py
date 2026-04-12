@@ -20,3 +20,8 @@ class ResetPINRequest(BaseModel):
 class MatrimonyApprovalRequest(BaseModel):
     profile_id: str
     action: str = "APPROVE" # or REJECT
+
+class RenewMembershipRequest(BaseModel):
+    user_id: str
+    request_id: Optional[str] = None  # membership_request id (for renewal requests)
+    admin_notes: Optional[str] = None
