@@ -289,7 +289,16 @@ const MemberDashboard = () => {
                                     <MemberCard user={user} />
                                 </div>
                             </div>
-                            {/* Download ID Card — hidden temporarily */}
+                            <div className="flex justify-center mt-4">
+                                <button
+                                    onClick={downloadCard}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-widest"
+                                    style={{ backgroundColor: 'var(--color-primary)' }}
+                                >
+                                    <Download size={14} />
+                                    Download ID Card
+                                </button>
+                            </div>
                         </section>
 
                         <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">

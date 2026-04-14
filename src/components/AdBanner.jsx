@@ -17,13 +17,13 @@ const AdBanner = () => (
             {/* Copy */}
             <div className="flex-1 text-center sm:text-left">
                 <p className="text-xs font-black tracking-widest text-amber-500 uppercase mb-0.5">
-                    Advertise with Us
+                    Advertise with us
                 </p>
-                <h3 className="text-base font-black text-gray-900 leading-snug">
-                    Reach 6000+ Niyogi Brahmin families
+                <h3 className="text-lg font-black text-gray-900 leading-tight">
+                    Reach Huge Number of 6000N Brahmin & Vast Number of Andhra Brahmin Families in entire world
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                    Promote your business, event or service directly to our active community members.
+                <p className="text-xs text-gray-500 mt-1">
+                    Promote your business, event or service directly to our global active community.
                 </p>
             </div>
 

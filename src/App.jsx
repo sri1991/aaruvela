@@ -14,6 +14,7 @@ import News from './pages/News.jsx';
 import MatrimonyLanding from './pages/Matrimony/MatrimonyLanding.jsx';
 import MatrimonyRegister from './pages/Matrimony/MatrimonyRegister.jsx';
 import MatrimonyMatches from './pages/Matrimony/MatrimonyMatches.jsx';
+import Disclaimer from './pages/Disclaimer.jsx';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -58,6 +59,7 @@ function App() {
               <Route path="/donations" element={<Donations />} />
               <Route path="/members" element={<Members />} />
               <Route path="/news" element={<News />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
               
               <Route path="/matrimony" element={<MatrimonyLanding />} />
               <Route path="/matrimony/register" element={
