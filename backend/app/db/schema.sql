@@ -111,6 +111,29 @@ CREATE TABLE IF NOT EXISTS presence (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Articles / News submissions with admin review
+CREATE TABLE IF NOT EXISTS articles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  summary TEXT,
+  category TEXT NOT NULL CHECK (category IN ('NEWS', 'ARTICLE')),
+  pdf_url TEXT,
+  pdf_path TEXT,
+  status TEXT NOT NULL DEFAULT 'PENDING'
+    CHECK (status IN ('PENDING', 'PUBLISHED', 'REJECTED')),
+  admin_notes TEXT,
+  submitted_by UUID
+    CONSTRAINT articles_submitted_by_fkey
+    REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_by UUID
+    CONSTRAINT articles_reviewed_by_fkey
+    REFERENCES users(id) ON DELETE SET NULL,
+  published_at TIMESTAMP WITH TIME ZONE,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- =====================================================
 -- INDEXES
 -- =====================================================
@@ -126,6 +149,9 @@ CREATE INDEX IF NOT EXISTS idx_channel_members_user ON channel_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(channel_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_presence_channel ON presence(channel_id);
+CREATE INDEX IF NOT EXISTS idx_articles_status_expires ON articles(status, expires_at DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_submitted_by ON articles(submitted_by);
+CREATE INDEX IF NOT EXISTS idx_articles_status_created ON articles(status, created_at DESC);
 
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
@@ -139,6 +165,7 @@ ALTER TABLE channels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE channel_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE presence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
 
 -- Users: Can only read their own data
 CREATE POLICY "Users can read own data"
@@ -222,6 +249,28 @@ CREATE POLICY "Users can update own presence"
 ON presence FOR ALL
 USING (auth.uid() = user_id);
 
+-- Articles: members can read currently-published articles
+CREATE POLICY "Members can read published articles"
+ON articles FOR SELECT
+USING (
+  status = 'PUBLISHED'
+  AND (expires_at IS NULL OR expires_at > NOW())
+);
+
+CREATE POLICY "Authors can read their own submissions"
+ON articles FOR SELECT
+USING (auth.uid() = submitted_by);
+
+CREATE POLICY "Admins can read all articles"
+ON articles FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM users
+    WHERE users.id = auth.uid()
+    AND users.role = 'HEAD'
+  )
+);
+
 -- =====================================================
 -- FUNCTIONS & TRIGGERS
 -- =====================================================
@@ -249,6 +298,9 @@ CREATE TRIGGER update_messages_updated_at BEFORE UPDATE ON messages
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_presence_updated_at BEFORE UPDATE ON presence
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
@@ -279,3 +331,4 @@ COMMENT ON TABLE channels IS 'Chat channels/groups';
 COMMENT ON TABLE channel_members IS 'User memberships in channels';
 COMMENT ON TABLE messages IS 'Chat messages';
 COMMENT ON TABLE presence IS 'User presence and online status';
+COMMENT ON TABLE articles IS 'Member-submitted news/articles with admin review and 30-day publication TTL';
