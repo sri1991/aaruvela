@@ -22,7 +22,7 @@ const Navbar = () => {
         // { name: 'Magazine', path: '/magazine' },
         // { name: 'Donations', path: '/donations' },
         // { name: 'Contact', path: '/contact' },
-        // { name: 'FAQ', path: '/faq' },
+        { name: 'Help', path: '/help' },
     ];
 
     return (

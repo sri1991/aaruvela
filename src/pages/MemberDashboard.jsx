@@ -283,7 +283,7 @@ const MemberDashboard = () => {
                     {/* Left Column: ID Card & Profile */}
                     <div className="lg:col-span-5 space-y-8">
                         <section>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mb-6 ml-1">Your Identity</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mb-6 text-center">Your Identity</h3>
                             <div className="overflow-x-auto -mx-4 px-4 pb-2">
                                 <div ref={cardRef} className="w-fit mx-auto">
                                     <MemberCard user={user} />
