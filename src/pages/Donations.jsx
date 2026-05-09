@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { User, Phone, MapPin, Heart, IndianRupee, Hash } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../lib/supabase';
+import api from '../lib/api';
 import paymentQR from '../assets/6000N Payment.jpg';
 
 const Donations = () => {
@@ -29,25 +29,31 @@ const Donations = () => {
         }
 
         setSubmitting(true);
-        const { error } = await supabase.from('donations').insert({
-            donor_name: form.name.trim(),
-            phone: form.phone.trim(),
-            place: form.place.trim(),
-            amount: Number(payment.amount),
-            payment_reference: payment.reference.trim(),
-        });
-        setSubmitting(false);
-
-        if (error) {
-            console.error(error);
-            toast.error('Failed to record donation. Please try again.');
-            return;
+        try {
+            await api.post('/donations', {
+                donor_name: form.name.trim(),
+                phone: form.phone.trim(),
+                place: form.place.trim(),
+                amount: Number(payment.amount),
+                payment_reference: payment.reference.trim(),
+            });
+            toast.success('Donation recorded! An admin will verify the payment shortly.');
+            setForm({ name: '', phone: '', place: '' });
+            setPayment({ amount: '', reference: '' });
+            setShowQR(false);
+        } catch (err) {
+            console.error(err);
+            const detail = err?.response?.data?.detail;
+            if (err?.response?.status === 409) {
+                toast.error(detail || 'This payment reference has already been submitted.');
+            } else if (err?.response?.status === 429) {
+                toast.error('Too many submissions. Please try again in a moment.');
+            } else {
+                toast.error(typeof detail === 'string' ? detail : 'Failed to record donation. Please try again.');
+            }
+        } finally {
+            setSubmitting(false);
         }
-
-        toast.success('Donation recorded! Thank you for your contribution.');
-        setForm({ name: '', phone: '', place: '' });
-        setPayment({ amount: '', reference: '' });
-        setShowQR(false);
     };
 
     return (
