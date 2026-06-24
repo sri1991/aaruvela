@@ -84,6 +84,7 @@ const MemberCard = ({ user }) => {
                             <img
                                 src={user.photo_url}
                                 alt={user.full_name}
+                                crossOrigin="anonymous"
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         ) : (

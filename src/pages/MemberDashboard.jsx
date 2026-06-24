@@ -172,7 +172,46 @@ const MemberDashboard = () => {
 
         const loadToast = toast.loading('Generating your official ID card...');
         try {
-            const dataUrl = await toJpeg(cardRef.current, { quality: 0.95, pixelRatio: 2 });
+            // Capture at the card's intrinsic size (not the mobile viewport size).
+            // On narrow screens the 480px card sits in a horizontal-scroll container;
+            // without explicit dimensions html-to-image clips it to the viewport width
+            // on mobile browsers, cutting off the right side of the card.
+            const node = cardRef.current;
+            const width = node.offsetWidth;
+            const height = node.offsetHeight;
+
+            // Make sure every image inside the card has actually finished loading
+            // before we capture — otherwise html-to-image renders empty boxes
+            // (banner / member photo) on mobile webviews.
+            await Promise.all(
+                Array.from(node.querySelectorAll('img')).map((img) =>
+                    img.complete && img.naturalWidth
+                        ? Promise.resolve()
+                        : new Promise((resolve) => {
+                            img.onload = resolve;
+                            img.onerror = resolve;
+                        })
+                )
+            );
+
+            const options = {
+                quality: 0.95,
+                pixelRatio: 2,
+                width,
+                height,
+                canvasWidth: width,
+                canvasHeight: height,
+                // JPEG has no transparency: anything not embedded becomes black.
+                // A white background keeps unfilled areas clean.
+                backgroundColor: '#ffffff',
+                style: { margin: '0', transform: 'none' },
+            };
+
+            // First pass warms html-to-image's internal resource cache (cross-origin
+            // photo + bundled banner); the second pass reliably embeds them. Mobile
+            // webviews frequently produce a blank first render otherwise.
+            await toJpeg(node, options);
+            const dataUrl = await toJpeg(node, options);
             const link = document.createElement('a');
             link.download = `Parishat-ID-${user.member_id || 'Member'}.jpg`;
             link.href = dataUrl;
