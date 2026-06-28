@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { isFoundingMember } from '../lib/foundingMembers';
 import { useAuth } from '../features/auth/AuthContext';
 import { User, MapPin, Award, Loader2, Search, Phone, X, Briefcase, Calendar, Star, LogIn, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -255,7 +256,12 @@ const Members = () => {
         }
     };
 
-    const roles = ['ALL', 'PERMANENT', 'NORMAL'];
+    const roleFilters = [
+        { value: 'ALL', label: 'All' },
+        { value: 'FOUNDING', label: 'Founding Members' },
+        { value: 'PERMANENT', label: 'Permanent' },
+        { value: 'NORMAL', label: 'Normal' },
+    ];
 
     const filtered = members.filter(m => {
         if (m.role === 'ASSOCIATED') return false;
@@ -263,7 +269,13 @@ const Members = () => {
             !search ||
             m.full_name?.toLowerCase().includes(search.toLowerCase()) ||
             m.member_id?.toLowerCase().includes(search.toLowerCase());
-        const matchesRole = filterRole === 'ALL' || m.role === filterRole;
+        const matchesRole =
+            filterRole === 'ALL'
+                ? true
+                : filterRole === 'FOUNDING'
+                    ? isFoundingMember(m)
+                    // Founders live under their own filter, not under Permanent.
+                    : m.role === filterRole && !isFoundingMember(m);
         return matchesSearch && matchesRole;
     });
 
@@ -291,17 +303,17 @@ const Members = () => {
                         />
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                        {roles.map(role => (
+                        {roleFilters.map(({ value, label }) => (
                             <button
-                                key={role}
-                                onClick={() => setFilterRole(role)}
+                                key={value}
+                                onClick={() => setFilterRole(value)}
                                 className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
-                                    filterRole === role
+                                    filterRole === value
                                         ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
                                         : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                 }`}
                             >
-                                {role}
+                                {label}
                             </button>
                         ))}
                     </div>

@@ -1,18 +1,12 @@
 import { User } from 'lucide-react';
 import headerBanner from '../assets/idcard/WhatsApp Image 2026-04-12 at 17.49.53.jpeg';
 import signature from '../assets/idcard/WhatsApp Image 2026-04-12 at 17.49.37.jpeg';
+import { isFoundingMember, foundingOffice } from '../lib/foundingMembers';
 
 // Roles that carry a named position title
 const POSITION_LABEL = {
     HEAD: 'President',
 };
-
-// Phones of founding members (from Administration page)
-const FOUNDING_MEMBER_PHONES = new Set([
-    '9849476726', '9885063577', '9440326363', '919491223344',
-    '8309874005', '9866103483', '9848645899', '9848747447',
-    '7997459859', '9440097872', '9246832468',
-]);
 
 // Roles with no specific position — shown as membership type
 const MEMBERSHIP_LABEL = {
@@ -34,10 +28,12 @@ const MemberCard = ({ user }) => {
         ? new Date(user.dob).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
         : '';
 
-    const isFoundingMember = user.role === 'PERMANENT' && FOUNDING_MEMBER_PHONES.has(user.phone);
     const roleDisplay = POSITION_LABEL[user.role]
-        || (isFoundingMember ? 'Founding Member' : MEMBERSHIP_LABEL[user.role])
+        || (isFoundingMember(user) ? 'Founding Member' : MEMBERSHIP_LABEL[user.role])
         || 'Member';
+
+    // Office position — shown on the ID card for founding members only.
+    const office = foundingOffice(user);
 
     return (
         <div style={{ width: '480px', margin: '0 auto', fontFamily: 'Arial, Helvetica, sans-serif', border: '2.5px solid #000', borderRadius: '4px', overflow: 'hidden' }}>
@@ -110,8 +106,15 @@ const MemberCard = ({ user }) => {
 
                         {/* Role + DOB row */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3px' }}>
-                            <div style={{ fontSize: '9px', color: '#333', fontStyle: 'italic' }}>
-                                {roleDisplay}
+                            <div>
+                                <div style={{ fontSize: '9px', color: '#333', fontStyle: 'italic' }}>
+                                    {roleDisplay}
+                                </div>
+                                {office && (
+                                    <div style={{ fontSize: '9px', color: '#1a5c4a', fontWeight: '800', marginTop: '1px' }}>
+                                        {office}
+                                    </div>
+                                )}
                             </div>
                             {dobFormatted && (
                                 <div style={{ textAlign: 'right', marginRight: '5px' }}>
