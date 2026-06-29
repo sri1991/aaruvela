@@ -167,12 +167,37 @@ const MemberDashboard = () => {
         }
     };
 
+    // Ensure every <img> inside the node is fully loaded/decoded before capture.
+    // On mobile (Safari/Chrome) html-to-image renders blank images otherwise.
+    const waitForImages = async (node) => {
+        const imgs = Array.from(node.querySelectorAll('img'));
+        await Promise.all(imgs.map((img) => {
+            if (img.complete && img.naturalWidth > 0) {
+                return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+            }
+            return new Promise((resolve) => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+            });
+        }));
+    };
+
     const downloadCard = async () => {
         if (!cardRef.current) return;
 
         const loadToast = toast.loading('Generating your official ID card...');
         try {
-            const dataUrl = await toJpeg(cardRef.current, { quality: 0.95, pixelRatio: 2 });
+            // Wait for fonts + images so nothing renders blank on mobile.
+            if (document.fonts?.ready) await document.fonts.ready;
+            await waitForImages(cardRef.current);
+
+            const opts = { quality: 0.95, pixelRatio: 2, cacheBust: true };
+            // Warm-up passes: the first 1-2 captures on mobile Safari often drop
+            // embedded images; repeating primes the cache so the final pass is complete.
+            await toJpeg(cardRef.current, opts);
+            await toJpeg(cardRef.current, opts);
+            const dataUrl = await toJpeg(cardRef.current, opts);
+
             const link = document.createElement('a');
             link.download = `Parishat-ID-${user.member_id || 'Member'}.jpg`;
             link.href = dataUrl;
