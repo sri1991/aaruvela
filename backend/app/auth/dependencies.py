@@ -1,14 +1,20 @@
 import logging
+import secrets
 from datetime import datetime, timezone
-from fastapi import Depends, HTTPException, status
+from typing import Optional
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth.utils import decode_access_token
+from app.config import settings
 from app.db import get_supabase_client, run_query
 
 PERPETUAL_ROLES = {"PERMANENT", "HEAD"}
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
+# Same as `security` but returns None instead of raising when no token is sent,
+# for endpoints that accept either a user token or a machine credential.
+optional_security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_id(
@@ -40,10 +46,8 @@ async def get_current_user_id(
     return user_id
 
 
-async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
-    """
-    Dependency: fetch full user record for the authenticated user.
-    """
+async def _fetch_user(user_id: str) -> dict:
+    """Load the full user record, or 404."""
     supabase = get_supabase_client()
     result = await run_query(
         lambda: supabase.table("users")
@@ -62,6 +66,13 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
     return result.data[0]
 
 
+async def get_current_user(user_id: str = Depends(get_current_user_id)) -> dict:
+    """
+    Dependency: fetch full user record for the authenticated user.
+    """
+    return await _fetch_user(user_id)
+
+
 async def require_role(required_role: str, current_user: dict = Depends(get_current_user)) -> dict:
     """
     Dependency: enforce a specific role.
@@ -77,6 +88,43 @@ async def require_role(required_role: str, current_user: dict = Depends(get_curr
 async def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """Dependency: require HEAD (admin) role."""
     return await require_role("HEAD", current_user)
+
+
+async def require_admin_or_cron(
+    x_cron_secret: Optional[str] = Header(None, alias="X-Cron-Secret"),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+) -> dict:
+    """
+    Dependency: allow either a HEAD user's token or the scheduled-job secret.
+
+    Used by maintenance endpoints that a cron job calls unattended.
+    """
+    if x_cron_secret is not None:
+        if not settings.cron_secret or not secrets.compare_digest(x_cron_secret, settings.cron_secret):
+            logger.warning("Rejected cron request with an invalid X-Cron-Secret")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid cron secret",
+            )
+        return {"id": None, "role": "CRON"}
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = decode_access_token(credentials.credentials)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await _fetch_user(payload["sub"])
+    return await require_role("HEAD", user)
 
 
 async def require_active_status(current_user: dict = Depends(get_current_user)) -> dict:

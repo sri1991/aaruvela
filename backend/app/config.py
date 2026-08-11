@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     api_port: int = 8000
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
     
+    # Shared secret for unattended maintenance jobs (e.g. the daily video cleanup
+    # cron). Leave blank to disable machine access to those endpoints entirely.
+    cron_secret: str = ""
+
     # Environment
     environment: str = "development"
     

@@ -28,6 +28,30 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false # Set to frontend URL after deployment
+      - key: CRON_SECRET
+        generateValue: true # Render generates it; the cron below reads the same value
+
+  # Daily video cleanup — deletes expired (7 day) and rejected videos plus their
+  # storage objects. Without this the bucket keeps growing even though expired
+  # videos are already hidden from members.
+  - type: cron
+    name: aaruvela-video-cleanup
+    runtime: docker
+    schedule: "0 20 * * *" # 01:30 IST daily
+    dockerfilePath: ./Dockerfile.cron
+    rootDir: backend
+    branch: main
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: aaruvela-api
+          property: url
+      - key: CRON_SECRET
+        fromService:
+          type: web
+          name: aaruvela-api
+          envVarKey: CRON_SECRET # Linked, so the two can never drift apart
 
 staticSites:
   # Frontend Service

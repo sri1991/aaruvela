@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuth } from '../features/auth/AuthContext';
 import { FileText, Newspaper, Loader2, Search, LogIn, Tag, X, Download, ExternalLink } from 'lucide-react';
+import AdSlot from '../components/AdSlot';
 
 const categoryColors = {
     NEWS:    { badge: 'bg-blue-100 text-blue-700 border-blue-200',   icon: <Newspaper size={12} /> },
@@ -247,6 +248,8 @@ const News = () => {
                             ))}
                         </div>
                     )}
+
+                    <AdSlot placement="NEWS_LIST" />
                 </div>
             </div>
 

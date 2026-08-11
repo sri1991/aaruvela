@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import AdSlot from '../../components/AdSlot';
 
 // ── Community helpers ─────────────────────────────────────────────────────────
 const getCommunity = (parishat_id) => {
@@ -498,6 +499,8 @@ const MatrimonyLanding = () => {
                             </React.Fragment>
                         ))}
                     </div>
+
+                    <AdSlot placement="MATRIMONY" />
                 </div>
             </div>
         </div>

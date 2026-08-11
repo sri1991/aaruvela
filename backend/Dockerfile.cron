@@ -1,0 +1,7 @@
+# Minimal image for the scheduled video-cleanup job (see render.yaml).
+# It only needs curl — the work happens in the API's /videos/cleanup endpoint.
+FROM alpine:3.20
+
+RUN apk add --no-cache curl
+
+CMD ["sh", "-c", "curl -sS -f -X POST \"$API_URL/videos/cleanup\" -H \"X-Cron-Secret: $CRON_SECRET\""]

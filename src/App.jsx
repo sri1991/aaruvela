@@ -11,6 +11,8 @@ import MemberDashboard from './pages/MemberDashboard.jsx';
 import Donations from './pages/Donations.jsx';
 import Members from './pages/Members.jsx';
 import News from './pages/News.jsx';
+import Videos from './pages/Videos.jsx';
+import Announcements from './pages/Announcements.jsx';
 import MatrimonyLanding from './pages/Matrimony/MatrimonyLanding.jsx';
 import MatrimonyRegister from './pages/Matrimony/MatrimonyRegister.jsx';
 import MatrimonyMatches from './pages/Matrimony/MatrimonyMatches.jsx';
@@ -60,6 +62,8 @@ function App() {
               <Route path="/donations" element={<Donations />} />
               <Route path="/members" element={<Members />} />
               <Route path="/news" element={<News />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/announcements" element={<Announcements />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
               
               <Route path="/matrimony" element={<MatrimonyLanding />} />

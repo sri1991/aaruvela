@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import MemberCard from '../components/MemberCard';
+import VideoSubmitCard from '../components/VideoSubmitCard';
 import { Button, Input } from '../components/ui';
 import { Download, Heart, Users, ShieldCheck, LogOut, ChevronRight, Bell, Camera, UploadCloud, Loader2, X, User, MapPin, Briefcase, Mail, Info, Newspaper, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
@@ -436,6 +437,9 @@ const MemberDashboard = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Community Videos — Active */}
+                            <VideoSubmitCard />
                         </div>
 
                         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-amber-200">

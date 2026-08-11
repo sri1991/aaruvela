@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Phone, BadgeCheck, FileText, MessageSquare } from 'lucide-react';
 import rcImage from '../assets/administration-rc.jpg';
 import chairmanMessagePdf from '../assets/6000N Pamplet.pdf';
 import logoLeft from '../assets/logo-left-main.jpg';
+import api from '../lib/api';
+
+// The Chairman's notice is replaceable from the admin dashboard. Until one has
+// been uploaded — or if the API is unreachable — fall back to the pamphlet that
+// ships with the app, so this tab is never empty.
+const FALLBACK_NOTICE = { pdf_url: chairmanMessagePdf, file_name: '6000N_Pamplet.pdf' };
 
 const MemberCard = ({ name, post, mobile, image, isExecutive }) => (
     <div className={`p-3 md:p-4 rounded-xl border ${isExecutive ? 'border-l-4 border-l-[var(--color-secondary)] bg-blue-50' : 'border-l-4 border-l-yellow-400 bg-yellow-50'} shadow-sm hover:shadow-md transition-shadow flex items-center gap-3`}>
@@ -34,6 +40,13 @@ const Administration = () => {
     const [activeTab, setActiveTab] = useState('founding');
     const [activeRegionTab, setActiveRegionTab] = useState('telangana');
     const [activeZonalTab, setActiveZonalTab] = useState('kosta');
+    const [chairmanNotice, setChairmanNotice] = useState(FALLBACK_NOTICE);
+
+    useEffect(() => {
+        api.get('/site/settings/chairman_notice')
+            .then(res => { if (res.data?.value?.pdf_url) setChairmanNotice(res.data.value); })
+            .catch(() => { /* nothing uploaded yet — keep the bundled pamphlet */ });
+    }, []);
 
     // Data provided by User
     const foundingMembers = [
@@ -177,13 +190,13 @@ const Administration = () => {
                         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-[85vh] w-full">
                             {/* Toolbar */}
                             <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
-                                    <FileText size={16} />
-                                    <span>6000N_Pamplet.pdf</span>
+                                <div className="flex items-center gap-2 text-gray-700 font-medium text-sm min-w-0">
+                                    <FileText size={16} className="shrink-0" />
+                                    <span className="truncate">{chairmanNotice.file_name}</span>
                                 </div>
                                 <a
-                                    href={chairmanMessagePdf}
-                                    download="Chairman_Message_Pamphlet.pdf"
+                                    href={chairmanNotice.pdf_url}
+                                    download={chairmanNotice.file_name}
                                     className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm"
                                 >
                                     <span>Download</span>
@@ -193,7 +206,8 @@ const Administration = () => {
                             {/* PDF Viewer */}
                             <div className="flex-1 bg-gray-100 relative w-full">
                                 <object
-                                    data={`${chairmanMessagePdf}#toolbar=0&navpanes=0&scrollbar=1`}
+                                    key={chairmanNotice.pdf_url}
+                                    data={`${chairmanNotice.pdf_url}#toolbar=0&navpanes=0&scrollbar=1`}
                                     type="application/pdf"
                                     className="w-full h-full block"
                                 >
@@ -204,7 +218,7 @@ const Administration = () => {
                                             This browser does not support inline PDF viewing.
                                         </p>
                                         <a
-                                            href={chairmanMessagePdf}
+                                            href={chairmanNotice.pdf_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-blue-600 font-medium hover:underline"
