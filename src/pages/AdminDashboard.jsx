@@ -16,7 +16,7 @@ import SiteContentTab from './admin/SiteContentTab';
 const TABS = [
     { id: 'membership',    label: 'Membership Requests', Component: MembershipTab },
     { id: 'renewals',      label: 'Renewals',            Component: RenewalsTab },
-    { id: 'articles',      label: 'News & Articles',     Component: ArticlesTab },
+    { id: 'articles',      label: 'Articles',            Component: ArticlesTab },
     { id: 'videos',        label: 'Videos',              Component: VideosTab },
     { id: 'announcements', label: 'Announcements',       Component: AnnouncementsTab },
     { id: 'ads',           label: 'Ads',                 Component: AdsTab },

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuth } from '../features/auth/AuthContext';
-import { FileText, Newspaper, Loader2, Search, LogIn, Tag, X, Download, ExternalLink } from 'lucide-react';
+import { FileText, Newspaper, BookOpen, Loader2, Search, LogIn, Tag, X, Download, ExternalLink } from 'lucide-react';
 import AdSlot from '../components/AdSlot';
 
 const categoryColors = {
-    NEWS:    { badge: 'bg-blue-100 text-blue-700 border-blue-200',   icon: <Newspaper size={12} /> },
-    ARTICLE: { badge: 'bg-amber-100 text-amber-700 border-amber-200', icon: <FileText size={12} /> },
+    ARTICLE:  { badge: 'bg-amber-100 text-amber-700 border-amber-200', icon: <FileText size={12} /> },
+    CIRCULAR: { badge: 'bg-blue-100 text-blue-700 border-blue-200',    icon: <Newspaper size={12} /> },
+    MAGAZINE: { badge: 'bg-purple-100 text-purple-700 border-purple-200', icon: <BookOpen size={12} /> },
 };
 
 const formatDate = (iso) => {
@@ -200,9 +201,9 @@ const News = () => {
             <div className="min-h-screen bg-gray-50 py-8 px-4">
                 <div className="container mx-auto max-w-5xl">
                     <div className="mb-6">
-                        <h1 className="text-2xl font-black text-gray-900">News & Articles</h1>
+                        <h1 className="text-2xl font-black text-gray-900">Articles & Publications</h1>
                         <p className="text-gray-500 text-sm mt-1">
-                            {loading ? '...' : `${articles.length} published article${articles.length !== 1 ? 's' : ''}`}
+                            {loading ? '...' : `${articles.length} published document${articles.length !== 1 ? 's' : ''}`}
                         </p>
                     </div>
 
@@ -218,7 +219,7 @@ const News = () => {
                             />
                         </div>
                         <div className="flex gap-2">
-                            {['ALL', 'NEWS', 'ARTICLE'].map(cat => (
+                            {['ALL', 'ARTICLE', 'CIRCULAR', 'MAGAZINE'].map(cat => (
                                 <button key={cat} onClick={() => setFilterCategory(cat)}
                                     className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                                         filterCategory === cat

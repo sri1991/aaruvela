@@ -10,6 +10,10 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
 
+// Temporarily hidden. Flip to true to bring the button back — the download
+// itself (downloadCard below) is untouched and still works.
+const SHOW_ID_CARD_DOWNLOAD = false;
+
 const MemberDashboard = () => {
     const { user, signOut, refreshUser } = useAuth();
     const navigate = useNavigate();
@@ -315,16 +319,18 @@ const MemberDashboard = () => {
                                     <MemberCard user={user} />
                                 </div>
                             </div>
-                            <div className="flex justify-center mt-4">
-                                <button
-                                    onClick={downloadCard}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-widest"
-                                    style={{ backgroundColor: 'var(--color-primary)' }}
-                                >
-                                    <Download size={14} />
-                                    Download ID Card
-                                </button>
-                            </div>
+                            {SHOW_ID_CARD_DOWNLOAD && (
+                                <div className="flex justify-center mt-4">
+                                    <button
+                                        onClick={downloadCard}
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-widest"
+                                        style={{ backgroundColor: 'var(--color-primary)' }}
+                                    >
+                                        <Download size={14} />
+                                        Download ID Card
+                                    </button>
+                                </div>
+                            )}
                         </section>
 
                         <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
@@ -409,7 +415,7 @@ const MemberDashboard = () => {
                                     </button>
                                 </div>
                             </div>
-                            {/* News & Articles — Active */}
+                            {/* Articles & Publications — Active */}
                             <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden md:col-span-2">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-start gap-5">
@@ -417,7 +423,7 @@ const MemberDashboard = () => {
                                             <Newspaper size={24} className="text-amber-500" />
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black text-gray-900 mb-1">News & Articles</h4>
+                                            <h4 className="text-lg font-black text-gray-900 mb-1">Articles &amp; Publications</h4>
                                             <p className="text-xs text-gray-500 leading-relaxed font-medium">Read the latest community news and publications. Submit your own article for review.</p>
                                         </div>
                                     </div>
@@ -485,7 +491,8 @@ const MemberDashboard = () => {
                                 <select value={articleForm.category} onChange={e => setArticleForm({ ...articleForm, category: e.target.value })}
                                     className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus:outline-none focus:border-[var(--color-primary)] outline-none">
                                     <option value="ARTICLE">Article</option>
-                                    <option value="NEWS">News</option>
+                                    <option value="CIRCULAR">Circular</option>
+                                    <option value="MAGAZINE">Magazine</option>
                                 </select>
                             </div>
                             <div className="space-y-1">

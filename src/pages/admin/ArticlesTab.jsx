@@ -7,6 +7,12 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../features/auth/AuthContext';
 
+const CATEGORY_BADGES = {
+    ARTICLE:  'bg-amber-100 text-amber-700 border-amber-200',
+    CIRCULAR: 'bg-blue-100 text-blue-700 border-blue-200',
+    MAGAZINE: 'bg-purple-100 text-purple-700 border-purple-200',
+};
+
 const ArticlesTab = () => {
     const { user } = useAuth();
     const [pending, setPending] = useState([]);
@@ -15,7 +21,7 @@ const ArticlesTab = () => {
     const [showPublishModal, setShowPublishModal] = useState(false);
     const [rejectModal, setRejectModal] = useState(null); // article being rejected
     const [rejectNote, setRejectNote] = useState('');
-    const [publishForm, setPublishForm] = useState({ title: '', summary: '', category: 'NEWS' });
+    const [publishForm, setPublishForm] = useState({ title: '', summary: '', category: 'ARTICLE' });
     const [pdfFile, setPdfFile] = useState(null);
     const [uploading, setUploading] = useState(false);
 
@@ -57,7 +63,7 @@ const ArticlesTab = () => {
             await api.post('/articles/publish', { ...publishForm, pdf_url, pdf_path });
             toast.success('Article published!');
             setShowPublishModal(false);
-            setPublishForm({ title: '', summary: '', category: 'NEWS' });
+            setPublishForm({ title: '', summary: '', category: 'ARTICLE' });
             setPdfFile(null);
         } catch (err) {
             toast.error(err.response?.data?.detail || 'Failed to publish');
@@ -132,7 +138,7 @@ const ArticlesTab = () => {
                                         <div>
                                             <p className="font-bold text-gray-900 text-sm">{article.title}</p>
                                             {article.summary && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{article.summary}</p>}
-                                            <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${article.category === 'NEWS' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                                            <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase ${CATEGORY_BADGES[article.category] || CATEGORY_BADGES.ARTICLE}`}>
                                                 {article.category}
                                             </span>
                                         </div>
@@ -187,8 +193,9 @@ const ArticlesTab = () => {
                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Category</label>
                                     <select value={publishForm.category} onChange={e => setPublishForm({ ...publishForm, category: e.target.value })}
                                         className="w-full h-12 rounded-2xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 focus:outline-none focus:border-[var(--color-primary)] outline-none">
-                                        <option value="NEWS">News</option>
                                         <option value="ARTICLE">Article</option>
+                                        <option value="CIRCULAR">Circular</option>
+                                        <option value="MAGAZINE">Magazine</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1">
