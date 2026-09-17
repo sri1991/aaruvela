@@ -11,6 +11,8 @@
 
 DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 DROP POLICY IF EXISTS "Anon users can upload" ON storage.objects;
+DROP POLICY IF EXISTS "Anon users can update" ON storage.objects;
+DROP POLICY IF EXISTS "Public bucket access" ON storage.buckets;
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('membership', 'membership', true)
@@ -34,7 +36,7 @@ FOR SELECT USING (id = 'membership');
 
 
 -- -----------------------------------------------------
--- chairman / videos / announcements / ads
+-- chairman / videos / announcements / ads / gallery
 --
 -- These are PUBLIC READ but have NO insert/update/delete
 -- policy on purpose. The browser never writes to them with
@@ -70,10 +72,16 @@ ON CONFLICT (id) DO UPDATE
   SET public = true, file_size_limit = 2097152,
       allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
 
--- Public read for the four content buckets
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('gallery', 'gallery', true, 4194304, ARRAY['image/jpeg', 'image/png', 'image/webp'])
+ON CONFLICT (id) DO UPDATE
+  SET public = true, file_size_limit = 4194304,
+      allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
+
+-- Public read for the five content buckets
 DROP POLICY IF EXISTS "Public read content buckets" ON storage.objects;
 CREATE POLICY "Public read content buckets" ON storage.objects
-FOR SELECT USING (bucket_id IN ('chairman', 'videos', 'announcements', 'ads'));
+FOR SELECT USING (bucket_id IN ('chairman', 'videos', 'announcements', 'ads', 'gallery'));
 
 -- The videos bucket also stores a small JPEG poster frame per video, which is
 -- why image/jpeg is in its allowed mime types.

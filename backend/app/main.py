@@ -18,6 +18,7 @@ from app.site.routes import router as site_router
 from app.videos.routes import router as videos_router
 from app.announcements.routes import router as announcements_router
 from app.ads.routes import router as ads_router
+from app.gallery.routes import router as gallery_router
 
 # Configure root logger for the application
 logging.basicConfig(
@@ -91,6 +92,7 @@ app.include_router(site_router, prefix="/site", tags=["Site Content"])
 app.include_router(videos_router, prefix="/videos", tags=["Videos"])
 app.include_router(announcements_router, prefix="/announcements", tags=["Announcements"])
 app.include_router(ads_router, prefix="/ads", tags=["Ads"])
+app.include_router(gallery_router, prefix="/gallery", tags=["Gallery"])
 
 
 if __name__ == "__main__":

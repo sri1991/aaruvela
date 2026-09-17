@@ -59,7 +59,7 @@ export function uploadToSignedUrl(target, file, onProgress) {
 
 /**
  * Admin helper: mint a signed upload URL for one of the admin-writable buckets
- * ('chairman' | 'announcements' | 'ads') and upload the file to it.
+ * ('chairman' | 'announcements' | 'ads' | 'gallery') and upload the file to it.
  * Resolves to `{ url, path }` for storing on the record.
  */
 export async function uploadAdminAsset(bucket, file, onProgress) {

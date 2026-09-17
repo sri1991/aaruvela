@@ -9,6 +9,7 @@ import ArticlesTab from './admin/ArticlesTab';
 import VideosTab from './admin/VideosTab';
 import AnnouncementsTab from './admin/AnnouncementsTab';
 import AdsTab from './admin/AdsTab';
+import GalleryTab from './admin/GalleryTab';
 import AccountsTab from './admin/AccountsTab';
 import MatrimonyTab from './admin/MatrimonyTab';
 import SiteContentTab from './admin/SiteContentTab';
@@ -20,6 +21,7 @@ const TABS = [
     { id: 'videos',        label: 'Videos',              Component: VideosTab },
     { id: 'announcements', label: 'Announcements',       Component: AnnouncementsTab },
     { id: 'ads',           label: 'Ads',                 Component: AdsTab },
+    { id: 'gallery',       label: 'Gallery',             Component: GalleryTab },
     { id: 'accounts',      label: 'Accounts',            Component: AccountsTab },
     { id: 'matrimony',     label: 'Matrimony Profiles',  Component: MatrimonyTab },
     { id: 'site',          label: 'Site Content',        Component: SiteContentTab },

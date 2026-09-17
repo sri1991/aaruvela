@@ -9,5 +9,5 @@ class ChairmanNoticeUpdate(BaseModel):
 
 class AdminUploadUrlRequest(BaseModel):
     """Ask for a signed upload URL into one of the admin-writable buckets."""
-    bucket: str = Field(..., pattern="^(chairman|announcements|ads)$")
+    bucket: str = Field(..., pattern="^(chairman|announcements|ads|gallery)$")
     file_name: str = Field(..., min_length=1, max_length=200)

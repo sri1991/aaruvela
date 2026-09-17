@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
 import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import api from '../lib/api';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -12,16 +13,19 @@ import 'swiper/css/effect-coverflow';
 const ImageGallery = () => {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [images, setImages] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Dynamically load images from src/assets/carousel
-    // Eager load ensures they are bundled
-    const imageModules = import.meta.glob('../assets/carousel/*.{png,jpg,jpeg,webp,svg}', { eager: true });
-
-    const images = Object.values(imageModules).map((mod, index) => ({
-        id: index,
-        src: mod.default,
-        alt: `Gallery Image ${index + 1}`
-    }));
+    useEffect(() => {
+        api.get('/gallery')
+            .then(res => setImages(res.data.map(img => ({
+                id: img.id,
+                src: img.image_url,
+                alt: img.caption || 'Gallery photo',
+            }))))
+            .catch(() => setImages([]))
+            .finally(() => setLoading(false));
+    }, []);
 
     const openLightbox = (index) => {
         setCurrentIndex(index);
@@ -51,13 +55,10 @@ const ImageGallery = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [lightboxOpen, images.length]);
 
+    if (loading) return null;
+
     if (images.length === 0) {
-        return (
-            <div className="text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-                <p className="text-gray-500">No images found in gallery.</p>
-                <p className="text-xs text-gray-400 mt-1">Add images to src/assets/carousel folder</p>
-            </div>
-        );
+        return null;
     }
 
     return (
