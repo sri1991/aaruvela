@@ -14,24 +14,43 @@ import AccountsTab from './admin/AccountsTab';
 import MatrimonyTab from './admin/MatrimonyTab';
 import SiteContentTab from './admin/SiteContentTab';
 
-const TABS = [
-    { id: 'membership',    label: 'Membership Requests', Component: MembershipTab },
-    { id: 'renewals',      label: 'Renewals',            Component: RenewalsTab },
-    { id: 'articles',      label: 'Articles',            Component: ArticlesTab },
-    { id: 'videos',        label: 'Videos',              Component: VideosTab },
-    { id: 'announcements', label: 'Announcements',       Component: AnnouncementsTab },
-    { id: 'ads',           label: 'Ads',                 Component: AdsTab },
-    { id: 'gallery',       label: 'Gallery',             Component: GalleryTab },
-    { id: 'accounts',      label: 'Accounts',            Component: AccountsTab },
-    { id: 'matrimony',     label: 'Matrimony Profiles',  Component: MatrimonyTab },
-    { id: 'site',          label: 'Site Content',        Component: SiteContentTab },
+const GROUPS = [
+    {
+        id: 'members',
+        label: 'Members',
+        tabs: [
+            { id: 'membership', label: 'Membership Requests', Component: MembershipTab },
+            { id: 'renewals',   label: 'Renewals',            Component: RenewalsTab },
+            { id: 'accounts',   label: 'Accounts',             Component: AccountsTab },
+            { id: 'matrimony',  label: 'Matrimony Profiles',  Component: MatrimonyTab },
+        ],
+    },
+    {
+        id: 'content',
+        label: 'Content',
+        tabs: [
+            { id: 'articles',      label: 'Articles',      Component: ArticlesTab },
+            { id: 'videos',        label: 'Videos',        Component: VideosTab },
+            { id: 'announcements', label: 'Announcements', Component: AnnouncementsTab },
+            { id: 'ads',           label: 'Ads',            Component: AdsTab },
+            { id: 'gallery',       label: 'Gallery',       Component: GalleryTab },
+            { id: 'site',          label: 'Site Content',  Component: SiteContentTab },
+        ],
+    },
 ];
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('membership');
+    const [activeGroup, setActiveGroup] = useState(GROUPS[0].id);
+    const [activeTab, setActiveTab] = useState(GROUPS[0].tabs[0].id);
 
-    const ActiveComponent = TABS.find(tab => tab.id === activeTab)?.Component ?? MembershipTab;
+    const currentGroup = GROUPS.find(g => g.id === activeGroup) ?? GROUPS[0];
+    const ActiveComponent = currentGroup.tabs.find(tab => tab.id === activeTab)?.Component ?? currentGroup.tabs[0].Component;
+
+    const selectGroup = (group) => {
+        setActiveGroup(group.id);
+        setActiveTab(group.tabs[0].id);
+    };
 
     return (
         <div className="bg-gray-50 min-h-screen py-8 px-4">
@@ -46,9 +65,19 @@ const AdminDashboard = () => {
                     </Button>
                 </div>
 
+                {/* Group Navigation */}
+                <div className="flex gap-2 mb-4">
+                    {GROUPS.map(group => (
+                        <button key={group.id} onClick={() => selectGroup(group)}
+                            className={`px-5 py-2 rounded-xl text-sm font-black uppercase tracking-wide transition-colors ${activeGroup === group.id ? 'bg-[var(--color-primary)] text-white' : 'bg-white text-gray-400 hover:text-gray-900 border border-gray-100'}`}>
+                            {group.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Tab Navigation */}
                 <div className="flex gap-1 bg-white rounded-2xl p-1 border border-gray-100 shadow-sm mb-8 flex-wrap">
-                    {TABS.map(tab => (
+                    {currentGroup.tabs.map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                             className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors ${activeTab === tab.id ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'}`}>
                             {tab.label}
