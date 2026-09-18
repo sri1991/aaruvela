@@ -10,7 +10,7 @@ const PLACEMENTS = [
     { id: 'HOME_BANNER', label: 'Home banner' },
     { id: 'NEWS_LIST',   label: 'News page' },
     { id: 'MATRIMONY',   label: 'Matrimony page' },
-    { id: 'FOOTER',      label: 'Footer' },
+    { id: 'FOOTER',      label: 'Sticky bar (all pages)' },
 ];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 

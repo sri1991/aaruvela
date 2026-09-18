@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuth } from '../features/auth/AuthContext';
-import AdSlot from '../components/AdSlot';
 import { Loader2, Video as VideoIcon, LogIn, Search, Clock, Play } from 'lucide-react';
 
 const formatDate = (iso) => {
@@ -162,8 +161,6 @@ const Videos = () => {
                         {filtered.map(video => <VideoCard key={video.id} video={video} />)}
                     </div>
                 )}
-
-                <AdSlot placement="FOOTER" />
             </div>
         </div>
     );

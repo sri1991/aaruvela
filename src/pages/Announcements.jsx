@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Loader2, Megaphone, Pin, ExternalLink } from 'lucide-react';
 import api from '../lib/api';
 import { categoryTheme, formatAnnouncementDate } from '../lib/announcements';
-import AdSlot from '../components/AdSlot';
 
 const CATEGORIES = ['ALL', 'GENERAL', 'EVENT', 'URGENT', 'MEETING'];
 
@@ -106,8 +105,6 @@ const Announcements = () => {
                         {filtered.map(item => <AnnouncementCard key={item.id} item={item} />)}
                     </div>
                 )}
-
-                <AdSlot placement="FOOTER" />
             </div>
         </div>
     );
