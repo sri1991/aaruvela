@@ -10,9 +10,7 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import api from '../lib/api';
 
-// Temporarily hidden. Flip to true to bring the button back — the download
-// itself (downloadCard below) is untouched and still works.
-const SHOW_ID_CARD_DOWNLOAD = false;
+const SHOW_ID_CARD_DOWNLOAD = true;
 
 const MemberDashboard = () => {
     const { user, signOut, refreshUser } = useAuth();
